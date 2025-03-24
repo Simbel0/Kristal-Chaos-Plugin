@@ -1,0 +1,10 @@
+{
+    "id": "chaos_plugin",
+    "name": "Chaos Plugin",
+
+    "version": "v1.0.0",
+    "engineVer": "v0.10.0-dev",
+
+    "plugin": {},
+    "hidden": true
+}
