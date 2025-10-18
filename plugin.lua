@@ -21,6 +21,8 @@ table.shuffle = function(tbl, amount)
     return tbl
 end
 
+-- I'm pretty sure this is incorrect, as dicts are not sorted. So for the same index, this function could return different values of the dict
+-- But in this case it doesn't matter since it's only used in a *random* function
 local function getValueFromIndexInDict(dict, index, get_value)
     local i = 0
     for k,v in pairs(dict) do
@@ -41,6 +43,32 @@ local function randomNotArray(tbl, get_value)
     return getValueFromIndexInDict(tbl, r, get_value)
 end
 
+local function IsRecursiveParent(obj1, obj2)
+    if obj1 == obj2 then return false end
+    if not obj1.parent then return false end
+
+    if obj1.parent == obj2 then
+        return true
+    end
+
+    return IsRecursiveParent(obj1.parent, obj2)
+end
+
+-- Game.world.stage and Game.battle.stage are the same so we gotta separate the objects manually
+function GetObjectsOfCorrectStage(class)
+    local objects = Game.world.stage:getObjects(class)
+    local stage = Game.battle or Game.world or Game.stage
+
+    local correct_objects = {}
+    for i,obj in ipairs(objects) do
+        if IsRecursiveParent(obj, stage) then
+            table.insert(correct_objects, obj)
+        end
+    end
+
+    return correct_objects
+end
+
 function Plugin:postLoad()
     print("Loaded !")
 
@@ -48,6 +76,7 @@ function Plugin:postLoad()
 
     self.timer_nb = Utils.random(60, 600)
     self.Timer = Timer()
+    self.overlap_musics = {}
 
     Utils.hook(Utils, "unhook", function(_, target, name)
         for i, hook in ipairs(Utils.__MOD_HOOKS) do
@@ -63,6 +92,7 @@ function Plugin:postLoad()
     self.event_glued_player = nil
     self.player_attraction = false
     self.player_attraction_timer = nil
+    self.assets_sound_spam_timer = nil
 
     self.decreasesColorShader = love.graphics.newShader([[
         extern vec3 lostcolor;
@@ -80,6 +110,7 @@ function Plugin:unload()
     if self.old_framerate then
         FRAMERATE = self.old_framerate
     end
+    self.mario:release()
 end
 
 function Plugin:postUpdate()
@@ -111,13 +142,17 @@ function Plugin:postUpdate()
 end
 
 function Plugin:sillyTime()
-    local rand = love.math.random(33)
+    local rand = love.math.random(1, 37)
     print(rand)
     if rand == 1 then
         Game:gameOver()
     elseif rand == 2 then
-        if Game.battle and Game.battle.soul then
-            Game.battle.soul.y = Game.battle.soul.y + Utils.random(-50, 50)
+        if Game.battle then
+            if Game.battle.soul then
+                Game.battle.soul.y = Game.battle.soul.y + Utils.random(-50, 50)
+            else
+                Game.battle.party[1].y = Game.battle.party[1].y + Utils.random(-50, 50)
+            end
             return
         end
         Game.world.player.y = Game.world.player.y + Utils.random(-50, 50)
@@ -146,7 +181,11 @@ function Plugin:sillyTime()
     elseif rand == 9 then
         Kristal.DebugSystem:openMenu()
     elseif rand == 10 then
-        Game.world:hurtParty(Utils.random(1, 100))
+        if Game.battle then
+            Game.battle:hurt(Utils.random(1, 100), true, "ALL")
+        else
+            Game.world:hurtParty(Utils.random(1, 100))
+        end
     elseif rand == 11 then
         Game.world.music:setPitch(Utils.random(0, 2))
     elseif rand == 12 then
@@ -209,6 +248,13 @@ function Plugin:sillyTime()
     elseif rand == 15 then -- Do some funny shit
         love.update(-5)
     elseif rand == 16 then -- Pop out or in of existance the player
+        if Game.battle then
+            if Game.battle.soul then
+                Game.battle.soul.alpha = Game.battle.soul.alpha == 1 and 0 or 1
+            else
+                Game.battle.party[1].alpha = Game.battle.party[1].alpha == 1 and 0 or 1
+            end
+        end
         Game.world.player.alpha = Game.world.player.alpha == 1 and 0 or 1
     elseif rand == 17 then -- Kris on drugs
         self.Timer:every(1/30, function()
@@ -262,11 +308,15 @@ function Plugin:sillyTime()
             Assets.data.frames[k] = {self.mario}
         end
     elseif rand == 27 then
-        local chara = Game.world:getCharacter(Game.party[love.math.random(1, #Game.party)].id)
+        local id = Game.party[love.math.random(1, #Game.party)].id
+        local chara = Game.world:getCharacter(id)
+        if Game.battle then
+            chara = Game.battle:getPartyBattler(id)
+        end
         chara.sprite.flip_x = not chara.sprite.flip_x
         chara.sprite.flip_y = not chara.sprite.flip_y
     elseif rand == 28 then
-        Game.world.camera.rotation = math.rad(Utils.random(380))
+        (Game.battle or Game.world).camera.rotation = math.rad(Utils.random(380))
     elseif rand == 29 then
         if not Game.battle then
             Game:encounter(randomNotArray(Registry.encounters, false))
@@ -283,16 +333,49 @@ function Plugin:sillyTime()
             self.player_attraction_timer = nil
         end)
     elseif rand == 31 then
-        local sprites = Game.world.stage:getObjects(Sprite)
+        local sprites = GetObjectsOfCorrectStage(Sprite) --Game.world.stage:getObjects(Sprite)
         local sprite = sprites[love.math.random(1, #sprites)]
         sprite.scale_x = Utils.random(-5, 5)
         sprite.scale_y = Utils.random(-5, 5)
     elseif rand == 32 then
-        for i=1,Game.world.map.width*40+Game.world.map.height*40 do
-            Game.world.map:setTile(love.math.random(Game.world.map.width*40), love.math.random(Game.world.map.height*40), love.math.random(0, 924))
+        if #Game.world.map.tile_layers > 0 then
+            for i=1,Game.world.map.width*40+Game.world.map.height*40 do
+                Game.world.map:setTile(love.math.random(Game.world.map.width*40), love.math.random(Game.world.map.height*40), love.math.random(0, 924))
+            end
         end
     elseif rand == 33 then
-        Game.world.player:setActor(randomNotArray(Registry.actors, false))
+        local actor = randomNotArray(Registry.actors, false)
+        Game.world.player:setActor(actor)
+        if Game.battle then
+            --Game.battle:getPartyBattler(Game.world.player.actor.id):setActor(actor)
+        end
+    elseif rand == 34 then
+        if self.assets_sound_spam_timer then
+            self.Timer:cancel(self.assets_sound_spam_timer)
+        end
+        self.assets_sound_spam_timer = self.Timer:every(1/20, function()
+            Assets.playSound(randomNotArray(Assets.sounds, false), 0.1, 1)
+        end, 500)
+    elseif rand == 35 then
+        table.insert(self.overlap_musics, Music(Game.battle and Game.battle.encounter.music or Game.world.map.music))
+        if #self.overlap_musics > 10 then
+            table.remove(self.overlap_musics, #self.overlap_musics):remove()
+        end
+    elseif rand == 36 then
+        local off_x = Utils.random(-100, 100)
+        local off_y = Utils.random(-100, 100)
+        for i,collider in ipairs(Game.world.map.collision) do
+            collider.x = collider.x+off_x
+            collider.y = collider.y+off_y
+        end
+    elseif rand == 37 then
+        for i,collider in ipairs(Game.world.map.collision) do
+            local off_x = Utils.random(-100, 100)
+            local off_y = Utils.random(-100, 100)
+
+            collider.x = collider.x+off_x
+            collider.y = collider.y+off_y
+        end
     end
 end
 
