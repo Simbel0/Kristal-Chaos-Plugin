@@ -1,4 +1,5 @@
 local Plugin = {}
+Registry.registerGlobal("Chaos", Plugin)
 
 table.shuffle = function(tbl, amount)
     if not Utils.isArray(tbl) then
@@ -69,14 +70,41 @@ function GetObjectsOfCorrectStage(class)
     return correct_objects
 end
 
-function Plugin:postLoad()
-    print("Loaded !")
+function Plugin:registerAsset(id, asset, replace)
+    if self.registry[id] and not replace then return end
+    self.registry[id] = asset
+end
 
-    self.mario = love.graphics.newImage("mods/chaos/assets/sprites/mario.png")
+function Plugin:getAsset(id)
+    return self.registry[id]
+end
 
-    self.timer_nb = Utils.random(60, 600)
-    self.Timer = Timer()
-    self.overlap_musics = {}
+function Plugin:emptyRegistry()
+    for k,v in pairs(self.registry) do
+        -- Handles LÖVE2D objects
+        if type(v) == "userdata" and v.release then
+            v:release()
+        -- Handles Kristal classes
+        elseif type(v) == "table" and isClass(v) then
+            v:remove()
+        end
+    end
+    TableUtils.clear(self.registry)
+end
+
+function Plugin:init()
+    self.print("init")
+
+    self.registry = {}
+
+    self.timer = Utils.random(60, 600)
+
+    self.debugStopChaos = false
+
+    self.FRAMERATE = FRAMERATE
+
+    self.chaos_effects = {}
+    self.active_chaos = {}
 
     Utils.hook(Utils, "unhook", function(_, target, name)
         for i, hook in ipairs(Utils.__MOD_HOOKS) do
@@ -88,11 +116,16 @@ function Plugin:postLoad()
         end
     end)
 
-    self.event_follow_player = nil
-    self.event_glued_player = nil
-    self.player_attraction = false
-    self.player_attraction_timer = nil
-    self.assets_sound_spam_timer = nil
+    for path, name, effect in Registry.iterScripts("chaos", true) do
+        if effect == nil then
+            local _, path_end = path:find("chaos/")
+            local error_path = (path_end and '"chaos/' .. path:sub(path_end+1) .. '.lua"' or '"'..path..'.lua"')
+            error(error_path.." does not return value")
+        end
+
+        local id = effect.id or name
+        self.chaos_effects[id] = effect
+    end
 
     self.decreasesColorShader = love.graphics.newShader([[
         extern vec3 lostcolor;
@@ -106,24 +139,60 @@ function Plugin:postLoad()
     ]])
 end
 
+--[[function Plugin:postLoad()    
+    self.overlap_musics = {}
+    --self.saveSound = Assets.newSound("save")
+
+    self.event_follow_player = nil
+    self.event_glued_player = nil
+    self.player_attraction = false
+    self.player_attraction_timer = nil
+    self.assets_sound_spam_timer = nil
+
+    self.print("Loaded!")
+end]]
+
 function Plugin:unload()
-    if self.old_framerate then
-        FRAMERATE = self.old_framerate
+    for i,v in ipairs(self.active_chaos) do
+        v:onEffectEnd(true)
     end
-    self.mario:release()
+    TableUtils.clear(self.chaos_effects)
+    self:emptyRegistry()
+    self.print("Unloaded!")
 end
 
-function Plugin:postUpdate()
-    print(self.timer_nb)
-    self.Timer:update()
-    self.timer_nb = self.timer_nb - DTMULT
+--[[function Plugin:onKeyPressed(key)
+    if Input.ctrl() and key == "s" then
+        Game:saveQuick()
+        self.saveSound:play()
+        self.print("The game has been temporarely saved! Use Ctrl+R to reload the mod!")
+        return true
+    end
+end]]
 
-    if self.timer_nb <= 0 then
+function Plugin:postUpdate()
+    --print(self.timer)
+    if self.debugStopChaos then return end
+    self.timer = self.timer - DTMULT
+
+    if self.timer <= 0 then
         self:sillyTime()
-        self.timer_nb = Utils.random(60, 600)
+        self.timer = Utils.random(60, 600)
     end
 
-    if self.event_glued_player then
+    for i=#self.active_chaos, 1, -1 do
+        local effect = self.active_chaos[i]
+        effect:update()
+
+        effect.duration = effect.duration - (DTMULT / self.FRAMERATE)
+        if effect.duration <= 0 then
+            self.print("Removing effect "..effect.id)
+            effect:onEffectEnd()
+            table.remove(self.active_chaos, i)
+        end
+    end
+
+    --[[if self.event_glued_player then
         self.event_glued_player:setPosition(self.event_glued_player:getPosition())
     end
 
@@ -138,12 +207,64 @@ function Plugin:postUpdate()
             objects[i].x = Utils.approach(obj.x, Game.world.player.x, 2*DTMULT)
             objects[i].y = Utils.approach(obj.y, Game.world.player.y, 2*DTMULT)
         end
-    end
+    end]]
 end
 
-function Plugin:sillyTime()
-    local rand = love.math.random(1, 37)
-    print(rand)
+function Plugin:forceChaos(nb)
+    self:sillyTime(nb)
+end
+
+function Plugin.print(msg)
+    msg = "[Chaos Plugin] "..msg
+    Kristal.Console:push("[color:#00ff00]"..msg)
+    print(msg)
+end
+
+function Plugin:ToggleChaos()
+    self.debugStopChaos = not self.debugStopChaos
+    self.print((self.debugStopChaos and "Stopped" or "Started").." the chaos!")
+end
+
+function Plugin:getChaosEffect(id)
+    return self.chaos_effects[id]
+end
+
+function Plugin:getRandomChaosEffect()
+    local possible_chaos = TableUtils.getKeys(self.chaos_effects)
+    local function random()
+        return self:getChaosEffect(TableUtils.removeValue(possible_chaos, TableUtils.pick(possible_chaos)))
+    end
+
+    local effect = random()
+    while not effect():canRunEffect() do
+        if #possible_chaos == 0 then
+            return nil
+        end
+        effect = random()
+    end
+    return effect
+end
+
+function Plugin:sillyTime(effect_id)
+    if effect_id then
+        assert(type(effect_id) == "string", "The provided id is invalid. Expected string, got "..type(effect_id)..".")
+    end
+
+    local effect = effect_id and self:getChaosEffect(effect_id) or self:getRandomChaosEffect()
+    if not effect then
+        self.print("No chaos effect is available in the current conditions!")
+        return
+    end
+    effect = effect()
+    self.print("Selected effect "..effect.id)
+
+    table.insert(self.active_chaos, effect)
+    effect:onEffectStart(Game.battle ~= nil)
+end
+
+function Plugin:_old__sillyTime(forceeffect)
+    local rand = forceeffect or love.math.random(1, 37)
+    self.print("Got effect "..rand)
     if rand == 1 then
         Game:gameOver()
     elseif rand == 2 then
@@ -290,6 +411,7 @@ function Plugin:sillyTime()
     elseif rand == 24 then
         table.shuffle(Assets.sounds, love.math.random(2, 10))
     elseif rand == 25 then
+        if not Game.world then return end
         local objects = Game.world.stage:getObjects(Character)
         for i,v in ipairs(Game.world.stage:getObjects(Event)) do
             table.insert(objects, v)
@@ -375,6 +497,53 @@ function Plugin:sillyTime()
 
             collider.x = collider.x+off_x
             collider.y = collider.y+off_y
+        end
+    elseif rand == 38 then
+        --[[local imwingdingtheroyalfont = Assets.getFont("wingding")
+        for font,data in pairs(Assets.data.fonts) do
+            print(font,data, type(data))
+            if type(data) == "userdata" then
+                Assets.data.fonts[font] = imwingdingtheroyalfont
+            elseif type(data) == "table" then
+                for size,data2 in pairs(data) do
+                    if type(v) == "userdata" then
+                        Assets.data.fonts[font][size] = imwingdingtheroyalfont
+                    end
+                end
+            end
+        end
+
+        local imwingdingtheroyalfontdata = Assets.data.font_data["wingding"]
+        for font,data in pairs(Assets.data.font_data) do
+            Assets.data.font_data[font] = imwingdingtheroyalfontdata
+        end]]
+        Utils.hook(Assets, "getFont", function(orig, path, size)
+            return orig("wingding", size)
+        end)
+    elseif rand == 39 then
+        for i,enemy in ipairs(Game.stage:getObjects(ChaserEnemy)) do
+            enemy.path = nil
+            enemy.can_chase = true
+
+            enemy.chase_speed = enemy.chase_speed * 2
+            if enemy.chase_max then
+                enemy.chase_max = enemy.chase_max * 4
+            end
+            if enemy.chase_accel then
+                enemy.chase_accel = enemy.chase_accel * 10
+            end
+
+            enemy:alert(nil, {callback=function()
+                enemy.chasing = true
+                enemy.noclip = false
+                enemy:setAnimation("chasing")
+            end})
+            enemy:setAnimation("alerted")
+            enemy:onAlerted()
+        end
+    elseif rand == 40 then
+        for i,npc in ipairs(Game.world.stage:getObjects(NPC)) do
+            npc:convertToEnemy()
         end
     end
 end
