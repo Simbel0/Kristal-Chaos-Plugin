@@ -106,6 +106,18 @@ function Plugin:init()
     self.chaos_effects = {}
     self.active_chaos = {}
 
+    -- Possibly dangerous af but also needed as unload isn't called when an error occurs apparently??
+    -- Some effect could leave huge modofications behind after a crash so unloading the plugin is just critical
+    Utils.hook(Kristal, "errorHandler", function(orig, ...)
+        local ok, err = pcall(self.unload, self)
+        if ok then
+            self.print("A crash occurred!! Chaos Plugin was able to unload itself")
+        else
+            self.print("A crash occurred!! Chaos Plugin met an error trying to unload itself: "..err)
+        end
+        return orig(...)
+    end)
+
     Utils.hook(Utils, "unhook", function(_, target, name)
         for i, hook in ipairs(Utils.__MOD_HOOKS) do
             if hook.target == target and hook.name == name then
