@@ -43,10 +43,10 @@ function Plugin.Utils:randomNotArray(tbl, get_value)
         max = max + 1
     end
     local r = love.math.random(1, max)
-    return getValueFromIndexInDict(tbl, r, get_value)
+    return self:getValueFromIndexInDict(tbl, r, get_value)
 end
 
-function Plugin.Utils:IsRecursiveParent(obj1, obj2)
+function Plugin.Utils:isRecursiveParent(obj1, obj2)
     if obj1 == obj2 then return false end
     if not obj1.parent then return false end
 
@@ -54,17 +54,17 @@ function Plugin.Utils:IsRecursiveParent(obj1, obj2)
         return true
     end
 
-    return IsRecursiveParent(obj1.parent, obj2)
+    return self:isRecursiveParent(obj1.parent, obj2)
 end
 
 -- Game.world.stage and Game.battle.stage are the same so we gotta separate the objects manually
-function Plugin.Utils:GetObjectsOfCorrectStage(class)
+function Plugin.Utils:getObjectsOfCorrectStage(class)
     local objects = Game.world.stage:getObjects(class)
     local stage = Game.battle or Game.world or Game.stage
 
     local correct_objects = {}
     for i,obj in ipairs(objects) do
-        if IsRecursiveParent(obj, stage) then
+        if self:isRecursiveParent(obj, stage) then
             table.insert(correct_objects, obj)
         end
     end
