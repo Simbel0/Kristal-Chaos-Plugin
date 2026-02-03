@@ -1,6 +1,8 @@
 local Plugin = {}
 Registry.registerGlobal("Chaos", Plugin)
 
+Plugin.Utils = {}
+
 table.shuffle = function(tbl, amount)
     if not Utils.isArray(tbl) then
         local values = {}
@@ -24,7 +26,7 @@ end
 
 -- I'm pretty sure this is incorrect, as dicts are not sorted. So for the same index, this function could return different values of the dict
 -- But in this case it doesn't matter since it's only used in a *random* function
-local function getValueFromIndexInDict(dict, index, get_value)
+function Plugin.Utils:getValueFromIndexInDict(dict, index, get_value)
     local i = 0
     for k,v in pairs(dict) do
         i = i+1
@@ -34,7 +36,7 @@ local function getValueFromIndexInDict(dict, index, get_value)
     end
 end
 
-local function randomNotArray(tbl, get_value)
+function Plugin.Utils:randomNotArray(tbl, get_value)
     if get_value == nil then get_value = true end
     local max = 0
     for k,v in pairs(tbl) do
@@ -44,7 +46,7 @@ local function randomNotArray(tbl, get_value)
     return getValueFromIndexInDict(tbl, r, get_value)
 end
 
-local function IsRecursiveParent(obj1, obj2)
+function Plugin.Utils:IsRecursiveParent(obj1, obj2)
     if obj1 == obj2 then return false end
     if not obj1.parent then return false end
 
@@ -56,7 +58,7 @@ local function IsRecursiveParent(obj1, obj2)
 end
 
 -- Game.world.stage and Game.battle.stage are the same so we gotta separate the objects manually
-function GetObjectsOfCorrectStage(class)
+function Plugin.Utils:GetObjectsOfCorrectStage(class)
     local objects = Game.world.stage:getObjects(class)
     local stage = Game.battle or Game.world or Game.stage
 
