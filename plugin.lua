@@ -221,7 +221,7 @@ function Plugin.print(msg)
     print(msg)
 end
 
-function Plugin:ToggleChaos()
+function Plugin:toggleChaos()
     self.debugStopChaos = not self.debugStopChaos
     self.print((self.debugStopChaos and "Stopped" or "Started").." the chaos!")
 end
@@ -316,8 +316,6 @@ function Plugin:_old__sillyTime(forceeffect)
         self.Timer:after(Utils.random(1, 10), function()
             self.event_glued_player = nil
         end)
-    elseif rand == 15 then -- Do some funny shit
-        love.update(-5)
     elseif rand == 16 then -- Pop out or in of existance the player
         if Game.battle then
             if Game.battle.soul then
@@ -386,11 +384,6 @@ function Plugin:_old__sillyTime(forceeffect)
         self.assets_sound_spam_timer = self.Timer:every(1/20, function()
             Assets.playSound(randomNotArray(Assets.sounds, false), 0.1, 1)
         end, 500)
-    elseif rand == 35 then
-        table.insert(self.overlap_musics, Music(Game.battle and Game.battle.encounter.music or Game.world.map.music))
-        if #self.overlap_musics > 10 then
-            table.remove(self.overlap_musics, #self.overlap_musics):remove()
-        end
     elseif rand == 36 then
         local off_x = Utils.random(-100, 100)
         local off_y = Utils.random(-100, 100)
@@ -405,31 +398,6 @@ function Plugin:_old__sillyTime(forceeffect)
 
             collider.x = collider.x+off_x
             collider.y = collider.y+off_y
-        end
-    elseif rand == 39 then
-        for i,enemy in ipairs(Game.stage:getObjects(ChaserEnemy)) do
-            enemy.path = nil
-            enemy.can_chase = true
-
-            enemy.chase_speed = enemy.chase_speed * 2
-            if enemy.chase_max then
-                enemy.chase_max = enemy.chase_max * 4
-            end
-            if enemy.chase_accel then
-                enemy.chase_accel = enemy.chase_accel * 10
-            end
-
-            enemy:alert(nil, {callback=function()
-                enemy.chasing = true
-                enemy.noclip = false
-                enemy:setAnimation("chasing")
-            end})
-            enemy:setAnimation("alerted")
-            enemy:onAlerted()
-        end
-    elseif rand == 40 then
-        for i,npc in ipairs(Game.world.stage:getObjects(NPC)) do
-            npc:convertToEnemy()
         end
     end
 end
