@@ -161,6 +161,11 @@ function Plugin:unload()
     end
     TableUtils.clear(self.chaos_effects)
     self:emptyRegistry()
+
+    FRAMERATE = self.FRAMERATE or Kristal.Config["fps"]
+    SCREEN_WIDTH = 640
+    SCREEN_HEIGHT = 480
+
     self.print("Unloaded!")
 end
 
