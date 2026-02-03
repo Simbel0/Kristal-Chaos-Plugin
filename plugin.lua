@@ -218,14 +218,18 @@ function Plugin:postUpdate()
     end]]
 end
 
-function Plugin:forceChaos(nb)
-    self:sillyTime(nb)
-end
-
 function Plugin.print(msg)
     msg = "[Chaos Plugin] "..msg
     Kristal.Console:push("[color:#00ff00]"..msg)
     print(msg)
+end
+
+function Plugin:forceChaos(id)
+    self:sillyTime(id)
+end
+
+function Plugin:getEffectIDs()
+    return TableUtils.getKeys(self.chaos_effects)
 end
 
 function Plugin:toggleChaos()
