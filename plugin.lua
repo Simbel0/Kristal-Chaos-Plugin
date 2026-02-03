@@ -242,7 +242,7 @@ function Plugin:getChaosEffect(id)
 end
 
 function Plugin:getRandomChaosEffect()
-    local possible_chaos = TableUtils.getKeys(self.chaos_effects)
+    local possible_chaos = self:getEffectIDs()
     local function random()
         return self:getChaosEffect(TableUtils.removeValue(possible_chaos, TableUtils.pick(possible_chaos)))
     end
