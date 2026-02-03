@@ -138,17 +138,6 @@ function Plugin:init()
         local id = effect.id or name
         self.chaos_effects[id] = effect
     end
-
-    self.decreasesColorShader = love.graphics.newShader([[
-        extern vec3 lostcolor;
-
-        vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
-        {
-            vec4 outputcolor = Texel(tex, texture_coords) * color;
-            vec3 newcolor = outputcolor.rbg - lostcolor.rgb;
-            return vec4(newcolor.r, newcolor.g, newcolor.b, color.a);
-        }
-    ]])
 end
 
 --[[function Plugin:postLoad()    
@@ -277,58 +266,7 @@ end
 function Plugin:_old__sillyTime(forceeffect)
     local rand = forceeffect or love.math.random(1, 37)
     self.print("Got effect "..rand)
-    if rand == 1 then
-        Game:gameOver()
-    elseif rand == 2 then
-        if Game.battle then
-            if Game.battle.soul then
-                Game.battle.soul.y = Game.battle.soul.y + Utils.random(-50, 50)
-            else
-                Game.battle.party[1].y = Game.battle.party[1].y + Utils.random(-50, 50)
-            end
-            return
-        end
-        Game.world.player.y = Game.world.player.y + Utils.random(-50, 50)
-    elseif rand == 3 then
-        SCREEN_WIDTH = Utils.random(10, 640)
-    elseif rand == 4 then
-        SCREEN_HEIGHT = Utils.random(10, 480)
-    elseif rand == 5 then
-        Game:giveTension(love.math.random(0, 200))
-    elseif rand == 6 then
-        self.old_framerate = FRAMERATE
-        FRAMERATE = 3
-        self.Timer:after(Utils.random(1, 10), function()
-            FRAMERATE = self.old_framerate
-            self.old_framerate = nil
-        end)
-    elseif rand == 7 then
-        Utils.hook(Player, "move", function(orig, self, x, y, speed, keep_facing)
-            orig(self, y, x, speed, keep_facing)
-        end)
-        self.Timer:after(Utils.random(1, 10), function()
-            Utils.unhook(Player, "move")
-        end)
-    elseif rand == 8 then
-        Kristal.Console:open()
-    elseif rand == 9 then
-        Kristal.DebugSystem:openMenu()
-    elseif rand == 10 then
-        if Game.battle then
-            Game.battle:hurt(Utils.random(1, 100), true, "ALL")
-        else
-            Game.world:hurtParty(Utils.random(1, 100))
-        end
-    elseif rand == 11 then
-        Game.world.music:setPitch(Utils.random(0, 2))
-    elseif rand == 12 then
-        Utils.hook(Player, "move", function(orig, self, x, y, speed, keep_facing)
-            -- nothing
-        end)
-        self.Timer:after(Utils.random(1, 10), function()
-            Utils.unhook(Player, "move")
-        end)
-    elseif rand == 13 then
+    if rand == 13 then
         local min_dist = math.huge
         local curr_event = nil
         if not Game.world or not Game.world.stage then
@@ -403,43 +341,9 @@ function Plugin:_old__sillyTime(forceeffect)
         self.Timer:after(Utils.random(1, 10), function()
             Game.world.camera.target = Game.world.player
         end)
-    elseif rand == 19 then
-        Game.world.camera:setAttached(false)
-        self.Timer:after(Utils.random(1, 10), function()
-            Game.world.camera:setAttached(true)
-        end)
-    elseif rand == 20 then
-        Game.world:loadMap(Game.world.map.id)
     elseif rand == 21 then
         for i=#Game.party, 2, -1 do
             Game:removePartyMember(Game.party[i])
-        end
-    elseif rand == 22 then
-        Game.stage:removeFX("lostcolor")
-        self.decreasesColorShader:send("lostcolor", {Utils.random(), Utils.random(), Utils.random()})
-        Game.stage:addFX(ShaderFX(self.decreasesColorShader), "lostcolor")
-    elseif rand == 23 then
-        Game.stage:shake(Utils.random(10, 100), Utils.random(10, 100), Utils.random(), Utils.random(1/30, 1))
-    elseif rand == 24 then
-        table.shuffle(Assets.sounds, love.math.random(2, 10))
-    elseif rand == 25 then
-        if not Game.world then return end
-        local objects = Game.world.stage:getObjects(Character)
-        for i,v in ipairs(Game.world.stage:getObjects(Event)) do
-            table.insert(objects, v)
-        end
-
-        for i,v in ipairs(objects) do
-            if v ~= Game.world.player then
-                v:explode()
-            end
-        end
-    elseif rand == 26 then
-        for k,texture in pairs(Assets.data.texture) do
-            Assets.data.texture[k] = self.mario
-        end
-        for k,texture in pairs(Assets.data.frames) do
-            Assets.data.frames[k] = {self.mario}
         end
     elseif rand == 27 then
         local id = Game.party[love.math.random(1, #Game.party)].id
@@ -449,14 +353,6 @@ function Plugin:_old__sillyTime(forceeffect)
         end
         chara.sprite.flip_x = not chara.sprite.flip_x
         chara.sprite.flip_y = not chara.sprite.flip_y
-    elseif rand == 28 then
-        (Game.battle or Game.world).camera.rotation = math.rad(Utils.random(380))
-    elseif rand == 29 then
-        if not Game.battle then
-            Game:encounter(randomNotArray(Registry.encounters, false))
-        else
-            randomNotArray(Registry.encounters)()
-        end
     elseif rand == 30 then
         if self.player_attraction_timer then
             self.Timer:cancel(self.player_attraction_timer)
@@ -510,28 +406,6 @@ function Plugin:_old__sillyTime(forceeffect)
             collider.x = collider.x+off_x
             collider.y = collider.y+off_y
         end
-    elseif rand == 38 then
-        --[[local imwingdingtheroyalfont = Assets.getFont("wingding")
-        for font,data in pairs(Assets.data.fonts) do
-            print(font,data, type(data))
-            if type(data) == "userdata" then
-                Assets.data.fonts[font] = imwingdingtheroyalfont
-            elseif type(data) == "table" then
-                for size,data2 in pairs(data) do
-                    if type(v) == "userdata" then
-                        Assets.data.fonts[font][size] = imwingdingtheroyalfont
-                    end
-                end
-            end
-        end
-
-        local imwingdingtheroyalfontdata = Assets.data.font_data["wingding"]
-        for font,data in pairs(Assets.data.font_data) do
-            Assets.data.font_data[font] = imwingdingtheroyalfontdata
-        end]]
-        Utils.hook(Assets, "getFont", function(orig, path, size)
-            return orig("wingding", size)
-        end)
     elseif rand == 39 then
         for i,enemy in ipairs(Game.stage:getObjects(ChaserEnemy)) do
             enemy.path = nil
