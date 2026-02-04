@@ -103,6 +103,9 @@ function Plugin:init()
 
     self.debugStopChaos = false
 
+    -- Should be set to nil on release
+    self.debug_chaos_pattern = nil--"^event.*Player"
+
     self.FRAMERATE = FRAMERATE
 
     self.chaos_effects = {}
@@ -138,7 +141,14 @@ function Plugin:init()
         end
 
         local id = effect.id or name
+        if self.debug_chaos_pattern then
+            if not string.match(id, self.debug_chaos_pattern) then
+                self.print("Effect with id \""..id.."\" was not loaded due to debug pattern!")
+                goto continue -- when the fuck will Lua get a continue keyword
+            end
+        end
         self.chaos_effects[id] = effect
+        ::continue::
     end
 end
 
