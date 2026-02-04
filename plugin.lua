@@ -337,21 +337,6 @@ function Plugin:_old__sillyTime(forceeffect)
         self.assets_sound_spam_timer = self.Timer:every(1/20, function()
             Assets.playSound(randomNotArray(Assets.sounds, false), 0.1, 1)
         end, 500)
-    elseif rand == 36 then
-        local off_x = Utils.random(-100, 100)
-        local off_y = Utils.random(-100, 100)
-        for i,collider in ipairs(Game.world.map.collision) do
-            collider.x = collider.x+off_x
-            collider.y = collider.y+off_y
-        end
-    elseif rand == 37 then
-        for i,collider in ipairs(Game.world.map.collision) do
-            local off_x = Utils.random(-100, 100)
-            local off_y = Utils.random(-100, 100)
-
-            collider.x = collider.x+off_x
-            collider.y = collider.y+off_y
-        end
     end
 end
 
