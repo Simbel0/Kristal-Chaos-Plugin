@@ -330,13 +330,6 @@ function Plugin:_old__sillyTime(forceeffect)
         if Game.battle then
             --Game.battle:getPartyBattler(Game.world.player.actor.id):setActor(actor)
         end
-    elseif rand == 34 then
-        if self.assets_sound_spam_timer then
-            self.Timer:cancel(self.assets_sound_spam_timer)
-        end
-        self.assets_sound_spam_timer = self.Timer:every(1/20, function()
-            Assets.playSound(randomNotArray(Assets.sounds, false), 0.1, 1)
-        end, 500)
     end
 end
 

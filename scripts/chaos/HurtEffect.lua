@@ -8,4 +8,8 @@ function HurtEffect:onEffectStart(in_battle)
     end
 end
 
+function HurtEffect:canRunEffect()
+    return Game.world and Game.world.stage
+end
+
 return HurtEffect
