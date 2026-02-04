@@ -199,23 +199,6 @@ function Plugin:postUpdate()
             table.remove(self.active_chaos, i)
         end
     end
-
-    --[[if self.event_glued_player then
-        self.event_glued_player:setPosition(self.event_glued_player:getPosition())
-    end
-
-    if self.player_attraction then
-        local objects = Game.world.stage:getObjects(Character)
-        for i,v in ipairs(Game.world.stage:getObjects(Event)) do
-            if not v:includes(Transition) then
-                table.insert(objects, v)
-            end
-        end
-        for i,obj in ipairs(objects) do
-            objects[i].x = Utils.approach(obj.x, Game.world.player.x, 2*DTMULT)
-            objects[i].y = Utils.approach(obj.y, Game.world.player.y, 2*DTMULT)
-        end
-    end]]
 end
 
 function Plugin.print(msg)
@@ -239,6 +222,14 @@ end
 
 function Plugin:getChaosEffect(id)
     return self.chaos_effects[id]
+end
+
+function Plugin:getActiveEffects()
+    return self.active_chaos
+end
+
+function Plugin:getActiveEffectsOfID(id)
+    return TableUtils.filter(self:getActiveEffects(), function(v) return v.id == id end)
 end
 
 function Plugin:getRandomChaosEffect()
@@ -277,57 +268,7 @@ end
 function Plugin:_old__sillyTime(forceeffect)
     local rand = forceeffect or love.math.random(1, 37)
     self.print("Got effect "..rand)
-    if rand == 13 then
-        local min_dist = math.huge
-        local curr_event = nil
-        if not Game.world or not Game.world.stage then
-            return
-        end
-        for i,event in ipairs(Game.world.stage:getObjects(Event)) do
-            local event_dist = Utils.dist(event.x, event.y, Game.world.player.x, Game.world.player.y)
-            if not (self.event_follow_player == event or self.event_glued_player == event) and event_dist <= min_dist then
-                min_dist = event_dist
-                curr_event = event
-            end
-        end
-
-        if curr_event == nil then
-            return
-        end
-
-        self.event_follow_player = curr_event
-
-        Utils.hook(Player, "move", function(orig, self, x, y, speed, keep_facing)
-            orig(self, x, y, speed, keep_facing)
-            curr_event:move(x, y, speed)
-        end)
-        self.Timer:after(Utils.random(1, 10), function()
-            Utils.unhook(Player, "move")
-            self.event_follow_player = nil
-        end)
-    elseif rand == 14 then
-        local min_dist = math.huge
-        local curr_event = nil
-        if not Game.world or not Game.world.stage then
-            return
-        end
-        for i,event in ipairs(Game.world.stage:getObjects(Event)) do
-            local event_dist = Utils.dist(event.x, event.y, Game.world.player.x, Game.world.player.y)
-            if event_dist <= min_dist then
-                min_dist = event_dist
-                curr_event = event
-            end
-        end
-
-        if curr_event == nil then
-            return
-        end
-
-        self.event_glued_player = curr_event
-        self.Timer:after(Utils.random(1, 10), function()
-            self.event_glued_player = nil
-        end)
-    elseif rand == 16 then -- Pop out or in of existance the player
+    if rand == 16 then -- Pop out or in of existance the player
         if Game.battle then
             if Game.battle.soul then
                 Game.battle.soul.alpha = Game.battle.soul.alpha == 1 and 0 or 1
@@ -362,15 +303,6 @@ function Plugin:_old__sillyTime(forceeffect)
         end
         chara.sprite.flip_x = not chara.sprite.flip_x
         chara.sprite.flip_y = not chara.sprite.flip_y
-    elseif rand == 30 then
-        if self.player_attraction_timer then
-            self.Timer:cancel(self.player_attraction_timer)
-        end
-        self.player_attraction = true
-        self.player_attraction_timer = self.Timer:after(Utils.random(1, 10), function()
-            self.player_attraction = false
-            self.player_attraction_timer = nil
-        end)
     elseif rand == 31 then
         local sprites = GetObjectsOfCorrectStage(Sprite) --Game.world.stage:getObjects(Sprite)
         local sprite = sprites[love.math.random(1, #sprites)]
