@@ -5,13 +5,13 @@ function InvertControlsEffect:init()
 end
 
 function InvertControlsEffect:onEffectStart(in_battle)
-	Utils.hook(Player, "move", function(orig, self, x, y, speed, keep_facing)
+	HookSystem.hook(Player, "move", function(orig, self, x, y, speed, keep_facing)
         orig(self, y, x, speed, keep_facing)
     end)
 end
 
 function InvertControlsEffect:onEffectEnd()
-	Utils.unhook(Player, "move")
+	HookSystem.unhook(Player, "move")
 end
 
 function InvertControlsEffect:canRunEffect()
