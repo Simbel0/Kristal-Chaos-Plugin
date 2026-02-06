@@ -287,20 +287,6 @@ function Plugin:_old__sillyTime(forceeffect)
             end
         end
         Game.world.player.alpha = Game.world.player.alpha == 1 and 0 or 1
-    elseif rand == 17 then -- Kris on drugs
-        self.Timer:every(1/30, function()
-            local x, y = Game.world.player:getPosition()
-            Game.world.player:setPosition(x+Utils.random(-10, 10), y+Utils.random(-10, 10))
-        end, 500)
-    elseif rand == 18 then
-        local objects = Game.world.stage:getObjects(Character)
-        for i,v in ipairs(Game.world.stage:getObjects(Event)) do
-            table.insert(objects, v)
-        end
-        Game.world.camera.target = objects[love.math.random(1, #objects)]
-        self.Timer:after(Utils.random(1, 10), function()
-            Game.world.camera.target = Game.world.player
-        end)
     elseif rand == 21 then
         for i=#Game.party, 2, -1 do
             Game:removePartyMember(Game.party[i])
