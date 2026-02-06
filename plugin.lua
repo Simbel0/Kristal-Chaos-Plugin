@@ -183,19 +183,6 @@ function Plugin:init()
     end
 end
 
---[[function Plugin:postLoad()    
-    self.overlap_musics = {}
-    --self.saveSound = Assets.newSound("save")
-
-    self.event_follow_player = nil
-    self.event_glued_player = nil
-    self.player_attraction = false
-    self.player_attraction_timer = nil
-    self.assets_sound_spam_timer = nil
-
-    self.print("Loaded!")
-end]]
-
 function Plugin:unload()
     for i,v in ipairs(self.active_chaos) do
         v:onEffectEnd(true)
@@ -210,17 +197,7 @@ function Plugin:unload()
     self.print("Unloaded!")
 end
 
---[[function Plugin:onKeyPressed(key)
-    if Input.ctrl() and key == "s" then
-        Game:saveQuick()
-        self.saveSound:play()
-        self.print("The game has been temporarely saved! Use Ctrl+R to reload the mod!")
-        return true
-    end
-end]]
-
 function Plugin:postUpdate()
-    --print(self.timer)
     if self.debugStopChaos then return end
     self.timer = self.timer - DTMULT
 
