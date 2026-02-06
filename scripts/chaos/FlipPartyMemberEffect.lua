@@ -11,7 +11,7 @@ function FlipPartyMemberEffect:onEffectStart(in_battle)
 end
 
 function FlipPartyMemberEffect:canRunEffect()
-	return (Game.world.stage or Game.battle.stage) and #Game.party > 0
+	return ((Game.world and Game.world.stage) or (Game.battle and Game.battle.stage)) and #Game.party > 0
 end
 
 return FlipPartyMemberEffect
