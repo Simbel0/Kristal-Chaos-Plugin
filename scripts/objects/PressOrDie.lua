@@ -4,7 +4,7 @@ function PressOrDie:init(hard)
 	super.init(self, 0, 0, 640, 480)
 
 	if hard == nil then
-		hard = true
+		hard = Utils.random()<0.5
 	end
 
 	self.inputs = {}
@@ -13,24 +13,41 @@ function PressOrDie:init(hard)
 		for i=97,122 do
 		    table.insert(self.inputs, string.char(i))
 		end
-		for i=1,12 do
-		    table.insert(self.inputs, "f"..i)
-		end
+		--for i=1,12 do
+		--    table.insert(self.inputs, "f"..i)
+		--end
 	else
 		TableUtils.merge(self.inputs, TableUtils.flatten(TableUtils.getValues(Input.gamepad_bindings), true))
 	end
 
+	self.font = Assets.getFont("main_mono")
 	if hard then
+		self.spacing = 25
+		self.max_width = 0
 		self.input_order = {}
 		for i=1,love.math.random(3, 6) do
-			table.insert(self.input_order, TableUtils.pick(self.inputs))
+			local key = TableUtils.pick(self.inputs)
+			table.insert(self.input_order, key)
+
+			if Input.usingGamepad() then
+				local input_tex = Input.getTexture(key)
+				if input_tex == Assets.getTexture("kristal/buttons/unknown") then
+					input_tex = "["..key:upper().."]"
+				end
+				self.max_width = self.max_width + (type(input_tex) == "string" and self.font:getWidth(input_tex) or input_tex:getWidth()) + self.spacing
+			else
+				local input_name = Input.getText(key)
+				if input_name:find("UNBOUND") then
+					input_name = "["..key:upper().."]"
+				end
+				self.max_width = self.max_width + self.font:getWidth(input_name) + self.spacing
+			end
 		end
 		self.index = 1
 	else
 		self.selected_input = TableUtils.pick(self.inputs)
 	end
 
-	print(self.selected_input)
 	self.success = nil
 
 	self.dead_time = 15
@@ -45,9 +62,7 @@ function PressOrDie:hasSucceeded()
 end
 
 local function hasPressedInput(input)
-	print("hasPressedInput", input)
 	for input_key,pressed in pairs(Input.key_pressed) do
-		print(input_key, input, pressed)
 		if pressed and input_key == input then
 			return true
 		end
@@ -59,7 +74,6 @@ function PressOrDie:update()
 	super.update(self)
 	if self.success ~= nil then return end
 	if self.dead_time > 0 then
-		print(self.dead_time)
 		self.dead_time = self.dead_time - DTMULT
 		return
 	end
@@ -88,10 +102,10 @@ function PressOrDie:update()
 end
 
 function PressOrDie:draw()
-	love.graphics.setFont(Assets.getFont("main_mono"))
-	Draw.printAlign("Press the input!", (640/2), 100, "center")
+	love.graphics.setFont(self.font)
 
 	if self.selected_input then
+		Draw.printAlign("Press the input!", (640/2), 100, "center")
 		if Input.usingGamepad() then
 			local input_tex = Input.getTexture(self.selected_input)
 			Draw.draw(input_tex, (640/2)/input_tex:getWidth()/2, 215)
@@ -103,6 +117,8 @@ function PressOrDie:draw()
 			Draw.printAlign(input_name, (640/2), 145, "center")
 		end
 	elseif self.input_order then
+		Draw.printAlign("Press the inputs in order!", (640/2), 100, "center")
+		local x = (640/2)-self.max_width/2
 		for i,key in ipairs(self.input_order) do
 			local input_name = Input.getText(key)
 			if input_name:find("UNBOUND") then
@@ -117,7 +133,8 @@ function PressOrDie:draw()
 				Draw.setColor(COLORS.white)
 			end
 
-			Draw.printAlign(input_name, 0+60*(i-1), 145, "left")
+			Draw.printAlign(input_name, x, 145, "left")
+			x = x + self.font:getWidth(input_name) + self.spacing
 		end
 	end
 	super.draw(self)

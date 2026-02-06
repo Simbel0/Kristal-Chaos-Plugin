@@ -11,13 +11,10 @@ function PressOrDieEffect:update()
 		return
 	end
 
-	--Chaos.print(self.handler:hasFailed(), self.handler:hasSucceeded(), self.handler.success)
 	if self.handler:hasFailed() then
-		print("Lost.")
 		Game:gameOver()
 		self:stopEffect()
 	elseif self.handler:hasSucceeded() then
-		print("Won.")
 		self:stopEffect()
 	end
 end
@@ -25,15 +22,16 @@ end
 function PressOrDieEffect:onEffectStart(in_battle)
 	Input.clear()
 	self.handler = Game.stage:addChild(PressOrDie())
-	Chaos:trackInputs(self.handler)
 end
 
 function PressOrDieEffect:onEffectEnd()
-	print("Stop PressOrDie")
 	if self.handler then
-		Chaos:stopTrackInputs(self.handler)
 		self.handler:remove()
 	end
+end
+
+function PressOrDieEffect:canRunEffect()
+	return #Chaos:getActiveEffectsOfID(self.id) == 0 and not Input.usingGamepad() -- fuck it
 end
 
 return PressOrDieEffect
