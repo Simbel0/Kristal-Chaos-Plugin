@@ -31,9 +31,21 @@ function EventAllApproachesPlayerEffect:onEffectStart(in_battle)
 end
 
 function EventAllApproachesPlayerEffect:update()
+    local to_remove = {}
     for i,obj in ipairs(self.events) do
-        self.events[i].x = MathUtils.approach(obj.x, Game.world.player.x, 2*DTMULT)
-        self.events[i].y = MathUtils.approach(obj.y, Game.world.player.y, 2*DTMULT)
+        if not self.events[i] or (self.events[i] and self.events[i]:isRemoved()) then
+            table.insert(to_remove, self.events[i])
+        else
+            self.events[i].x = MathUtils.approach(obj.x, Game.world.player.x, 2*DTMULT)
+            self.events[i].y = MathUtils.approach(obj.y, Game.world.player.y, 2*DTMULT)
+        end
+    end
+
+    for i,v in ipairs(to_remove) do
+        TableUtils.removeValue(self.events, v)
+    end
+    if #self.events == 0 then
+        self:stopEffect()
     end
 end
 

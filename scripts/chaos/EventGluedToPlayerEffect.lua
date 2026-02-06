@@ -27,6 +27,10 @@ function EventGluedToPlayerEffect:onEffectStart(in_battle)
 end
 
 function EventGluedToPlayerEffect:update()
+    if not self.event or (self.event and self.event:isRemoved()) then
+        self:stopEffect()
+        return
+    end
 	self.event:setPosition(Game.world.player:getPosition())
 end
 

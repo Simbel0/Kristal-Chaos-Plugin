@@ -34,6 +34,11 @@ function EventApproachesPlayerEffect:onEffectStart(in_battle)
 end
 
 function EventApproachesPlayerEffect:update()
+    if not self.event or (self.event and self.event:isRemoved()) then
+        self:stopEffect()
+        return
+    end
+    
 	local x, y = self.event:getPosition()
 
 	x = MathUtils.approach(x, Game.world.player.x, 2*DTMULT)
