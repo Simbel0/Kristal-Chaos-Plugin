@@ -59,13 +59,29 @@ end
 
 -- Game.world.stage and Game.battle.stage are the same so we gotta separate the objects manually
 function Plugin.Utils:getObjectsOfCorrectStage(class)
-    local objects = Game.world.stage:getObjects(class)
+    local objects = Game.stage:getObjects(class)
     local stage = Game.battle or Game.world or Game.stage
 
     local correct_objects = {}
     for i,obj in ipairs(objects) do
         if self:isRecursiveParent(obj, stage) then
             table.insert(correct_objects, obj)
+        end
+    end
+
+    return correct_objects
+end
+
+function Plugin.Utils:getAllInstancesOfClass(class, objs, recur_objs)
+    local objects = objs or Game.stage:getObjects()
+    local correct_objects = recur_objs or {}
+
+    for i,obj in ipairs(objects) do
+        if obj:includes(class) and not TableUtils.contains(correct_objects, obj) then
+            table.insert(correct_objects, obj)
+        end
+        if obj.children and #obj.children > 0 then
+            self:getAllInstancesOfClass(class, obj.children, correct_objects)
         end
     end
 
@@ -131,6 +147,21 @@ function Plugin:init()
                 return true
             end
         end
+    end)
+
+    --- @class TableUtils
+    --- Returns a list of every key in a table.
+    ---
+    ---@generic T
+    ---@param t table<T, any> # The table to get the keys from.
+    ---@return T[] result     # An array of each key in the table.
+    ---
+    HookSystem.hook(TableUtils, "getValues", function(_, t)
+        local result = {}
+        for _, value in pairs(t) do
+            table.insert(result, value)
+        end
+        return result
     end)
 
     for path, name, effect in Registry.iterScripts("chaos", true) do
@@ -273,44 +304,6 @@ function Plugin:sillyTime(effect_id)
 
     table.insert(self.active_chaos, effect)
     effect:onEffectStart(Game.battle ~= nil)
-end
-
-function Plugin:_old__sillyTime(forceeffect)
-    local rand = forceeffect or love.math.random(1, 37)
-    self.print("Got effect "..rand)
-    if rand == 16 then -- Pop out or in of existance the player
-        if Game.battle then
-            if Game.battle.soul then
-                Game.battle.soul.alpha = Game.battle.soul.alpha == 1 and 0 or 1
-            else
-                Game.battle.party[1].alpha = Game.battle.party[1].alpha == 1 and 0 or 1
-            end
-        end
-        Game.world.player.alpha = Game.world.player.alpha == 1 and 0 or 1
-    elseif rand == 21 then
-        for i=#Game.party, 2, -1 do
-            Game:removePartyMember(Game.party[i])
-        end
-    elseif rand == 27 then
-        local id = Game.party[love.math.random(1, #Game.party)].id
-        local chara = Game.world:getCharacter(id)
-        if Game.battle then
-            chara = Game.battle:getPartyBattler(id)
-        end
-        chara.sprite.flip_x = not chara.sprite.flip_x
-        chara.sprite.flip_y = not chara.sprite.flip_y
-    elseif rand == 31 then
-        local sprites = GetObjectsOfCorrectStage(Sprite) --Game.world.stage:getObjects(Sprite)
-        local sprite = sprites[love.math.random(1, #sprites)]
-        sprite.scale_x = Utils.random(-5, 5)
-        sprite.scale_y = Utils.random(-5, 5)
-    elseif rand == 33 then
-        local actor = randomNotArray(Registry.actors, false)
-        Game.world.player:setActor(actor)
-        if Game.battle then
-            --Game.battle:getPartyBattler(Game.world.player.actor.id):setActor(actor)
-        end
-    end
 end
 
 return Plugin
