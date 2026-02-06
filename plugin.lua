@@ -304,12 +304,6 @@ function Plugin:_old__sillyTime(forceeffect)
         local sprite = sprites[love.math.random(1, #sprites)]
         sprite.scale_x = Utils.random(-5, 5)
         sprite.scale_y = Utils.random(-5, 5)
-    elseif rand == 32 then
-        if #Game.world.map.tile_layers > 0 then
-            for i=1,Game.world.map.width*40+Game.world.map.height*40 do
-                Game.world.map:setTile(love.math.random(Game.world.map.width*40), love.math.random(Game.world.map.height*40), love.math.random(0, 924))
-            end
-        end
     elseif rand == 33 then
         local actor = randomNotArray(Registry.actors, false)
         Game.world.player:setActor(actor)
