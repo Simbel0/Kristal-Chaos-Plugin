@@ -1,0 +1,1 @@
+return love.filesystem.load(Mod.info.libs["chaos_lib"].path.."/plugin.lua")()
