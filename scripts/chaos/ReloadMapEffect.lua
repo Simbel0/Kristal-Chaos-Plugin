@@ -5,7 +5,7 @@ function ReloadMapEffect:onEffectStart(in_battle)
 end
 
 function ReloadMapEffect:canRunEffect()
-    return Game.world ~= nil and Game.world.map ~= nil and not Game.battle
+    return Game.world and Game.world.map and not Game.battle
 end
 
 return ReloadMapEffect

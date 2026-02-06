@@ -7,7 +7,7 @@ function NPCsAttaccEffect:onEffectStart(in_battle)
 end
 
 function NPCsAttaccEffect:canRunEffect()
-    return Game.world
+    return Game.world and Game.world.stage
 end
 
 return NPCsAttaccEffect

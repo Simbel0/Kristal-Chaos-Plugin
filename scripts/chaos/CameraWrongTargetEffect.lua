@@ -14,4 +14,8 @@ function CameraWrongTargetEffect:onEffectEnd()
 	Game.world.camera.target = Game.world.player
 end
 
+function CameraWrongTargetEffect:canRunEffect()
+	return Game.world and Game.world.stage
+end
+
 return CameraWrongTargetEffect

@@ -11,7 +11,7 @@ function ExplodeEventsEffect:onEffectStart(in_battle)
 end
 
 function ExplodeEventsEffect:canRunEffect()
-	return Game.world ~= nil
+	return Game.world and Game.world.stage
 end
 
 return ExplodeEventsEffect
