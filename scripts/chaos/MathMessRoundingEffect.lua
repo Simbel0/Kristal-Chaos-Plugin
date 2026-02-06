@@ -19,7 +19,7 @@ function MathMessRoundingEffect:onEffectEnd()
 	math.ceil = self.orig.ceil
 end
 
-function MathRotationMessEffect:canRunEffect()
+function MathMessRoundingEffect:canRunEffect()
 	return #Chaos:getActiveEffectsOfID(self.id) == 0
 end
 
