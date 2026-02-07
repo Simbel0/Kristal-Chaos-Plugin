@@ -54,7 +54,7 @@ function LIMBO:randomizeColors()
 	local keys_color = TableUtils.filter(TableUtils.getKeys(COLORS), function(v) return not TableUtils.contains(blacklist, v) end)
 
 	for i,data in ipairs(self.keys_data) do
-		data.color = COLORS[table.remove(keys_color, love.math.random(1, #keys_color))]
+		data.color = TableUtils.copy(COLORS[table.remove(keys_color, love.math.random(1, #keys_color))], true)
 	end
 end
 
@@ -217,6 +217,7 @@ function LIMBO:update()
 	elseif self.state == 8 then
 		if self.selected_key == self.correct_key then
 			Assets.playSound("won")
+			self.timer = 40
 			self.keys_data[self.selected_key].color_alpha = 0
 		else
 			self.use_wrong = true

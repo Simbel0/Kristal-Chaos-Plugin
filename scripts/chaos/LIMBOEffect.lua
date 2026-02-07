@@ -43,6 +43,7 @@ function LIMBOEffect:onEffectEnd()
 	if self.handler then
 		self.handler:remove()
 	end
+	Chaos:getAsset("limbo"):stop()
 end
 
 function LIMBOEffect:canRunEffect()
