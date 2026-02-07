@@ -111,8 +111,6 @@ function Plugin:emptyRegistry()
 end
 
 function Plugin:init()
-    self.print("init")
-
     self.registry = {}
 
     self.timer = Utils.random(60, 600)
@@ -181,6 +179,8 @@ function Plugin:init()
         self.chaos_effects[id] = effect
         ::continue::
     end
+
+    self.print(#self:getEffectIDs().." effects loaded!")
 end
 
 function Plugin:unload()
