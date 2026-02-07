@@ -7,21 +7,22 @@ function LIMBO:init()
 	self.music:setLooping(false)
 
 	self.keys_tex = Assets.getTexture("player/heart_dodge")
+	self.keys_wrong_tex = Assets.getTexture("player/heart_break")
 	self.keys_data = {}
-	self.key_speed = 5
+	self.keys_radius = 150
+	self.key_speed = 0.5
+	self.key_rotate_timer = 0
+	self.key_rotate_speed = 0.2
 
-	local keys_color = TableUtils.getKeys(COLORS)
-	TableUtils.removeValue(keys_color, "white")
-	TableUtils.removeValue(keys_color, "grey")
-	TableUtils.removeValue(keys_color, "gray")
-	TableUtils.removeValue(keys_color, "black")
+	self.use_wrong = false
 
 	local x, y = (640/2)-80, 100
 	for i=1,8 do
 		table.insert(self.keys_data, {
 			pos = {640/2, -20},
 			destination = {x, y},
-			color = COLORS[table.remove(keys_color, love.math.random(1, #keys_color))],
+			--use_approach = false,
+			move_timer = 0,
 			use_color = true,
 			color_alpha = 1
 		})
@@ -31,8 +32,10 @@ function LIMBO:init()
 			y = y + 80
 		end
 	end
+	self:randomizeColors()
 
 	self.correct_key = love.math.random(1, 8)
+	self.selected_key = 0
 
 	self.music:play()
 
@@ -44,6 +47,15 @@ function LIMBO:init()
 	-- 4: wait for player's choice
 	-- 10: debug. Press CONFIRM to shuffle
 	self.state = 0
+end
+
+function LIMBO:randomizeColors()
+	local blacklist = {"white", "gray", "ltgray", "dkgray", "black", "teal", "silver"}
+	local keys_color = TableUtils.filter(TableUtils.getKeys(COLORS), function(v) return not TableUtils.contains(blacklist, v) end)
+
+	for i,data in ipairs(self.keys_data) do
+		data.color = COLORS[table.remove(keys_color, love.math.random(1, #keys_color))]
+	end
 end
 
 function LIMBO:isKeyAtDestination(key_data)
@@ -81,7 +93,6 @@ local function createMatrix(tbl, w)
 end
 
 function LIMBO:shuffleKeys()
-	print("SHUFFLE")
 	local all_pos = {}
 	for i,data in ipairs(self.keys_data) do
 		table.insert(all_pos, data.pos)
@@ -103,14 +114,21 @@ function LIMBO:shuffleKeys()
 
 	local new_dest = TableUtils.flatten(matrix)
 	for i,data in ipairs(self.keys_data) do
+		data.move_timer = 0
 		data.destination = table.remove(new_dest, 1)
 	end
 end
 
+local function rectCollision(x, y, rect_data)
+	return x >= rect_data.x
+	   and x <= rect_data.x + rect_data.width
+	   and y >= rect_data.y
+	   and y <= rect_data.y + rect_data.height
+end
+
 function LIMBO:update()
 	super.update(self)
-	Chaos.print(self.music:tell())
-
+	if self.success ~= nil then return end
 	if self.music:tell() >= 5 and self.state == 0 then
 		self.state = 1
 		for i,data in ipairs(self.keys_data) do
@@ -123,18 +141,23 @@ function LIMBO:update()
 		self.keys_data[self.correct_key].use_color = false
 	elseif self.music:tell() >= 9.5 and self.state == 2 then
 		self.state = 3
-		self.key_speed = 10
+		self.key_speed = 7.5
 	elseif self.music:tell() >= 28.7 and self.state == 3 then
 		self.state = 4
+		self.key_speed = 2
+		self:randomizeColors()
 		for i,data in ipairs(self.keys_data) do
 			data.use_color = true
+			data.move_timer = 0
 		end
 	end
 
 	for i,data in ipairs(self.keys_data) do
 		if not self:isKeyAtDestination(data) then
-			data.pos[1] = MathUtils.approach(data.pos[1], data.destination[1], self.key_speed*DTMULT)
-			data.pos[2] = MathUtils.approach(data.pos[2], data.destination[2], self.key_speed*DTMULT)
+			data.move_timer = Utils.clamp(data.move_timer + (self.key_speed/100)*DTMULT, 0, 1)
+			data.pos = TableUtils.lerp(data.pos, data.destination, data.move_timer)
+			--data.pos[1] = MathUtils.approach(data.pos[1], data.destination[1], self.key_speed*DTMULT)
+			--data.pos[2] = MathUtils.approach(data.pos[2], data.destination[2], self.key_speed*DTMULT)
 		end
 
 		if not data.use_color and data.color_alpha > 0 then
@@ -144,7 +167,67 @@ function LIMBO:update()
 		end
 	end
 
-	print(self:areAllKeysAtDestination())
+	if self.state == 4 or self.state == 5 then
+		local mX, mY = Input.getMousePosition()
+
+		for i,data in ipairs(self.keys_data) do
+			local circle = (2 * math.pi)
+			self.key_rotate_timer = self.key_rotate_timer+(self.key_rotate_speed/100)*DTMULT
+			local angle = (self.key_rotate_timer + (i-1) * (circle / #self.keys_data))%circle
+			local x = (640/2) + math.cos(angle) * self.keys_radius
+			local y = (480/2) - math.sin(angle) * self.keys_radius
+
+			data.destination = {x, y}
+
+			if self.state == 4 and Input.mousePressed(1) and rectCollision(mX, mY, {x=x, y=y, width=self.keys_tex:getWidth(), height=self.keys_tex:getHeight()}) then
+				self.selected_key = i
+				self.state = 5
+				for i,data in ipairs(self.keys_data) do
+					data.color_alpha = 0
+				end
+				break
+			elseif self.state == 5 then
+				self.key_rotate_speed = MathUtils.clamp(self.key_rotate_speed-0.0005*DTMULT, 0, 999)
+				if self.key_rotate_speed <= 0 then
+					self.state = 6
+				end
+			end
+		end
+	elseif self.state == 6 then
+		local next = true
+		for i,data in ipairs(self.keys_data) do
+			if self.state == 6 and i ~= self.selected_key then
+				data.color[4] = MathUtils.clamp(data.color[4] - 0.1*DTMULT, 0, 1)
+				if data.color[4] > 0 and next then
+					next = false
+				end
+			end
+		end
+
+		if next then
+			self.timer = 60
+			self.state = 7
+		end
+	elseif self.state == 7 or self.state == 9 then
+		self.timer = (self.timer or 120) - DTMULT
+		if self.timer <= 0 then
+			self.timer = nil
+			self.state = self.state + 1
+		end
+	elseif self.state == 8 then
+		if self.selected_key == self.correct_key then
+			Assets.playSound("won")
+			self.keys_data[self.selected_key].color_alpha = 0
+		else
+			self.use_wrong = true
+			self.timer = 30
+			Assets.playSound("break1")
+		end
+		self.state = 9
+	elseif self.state == 10 then
+		self.success = (self.selected_key == self.correct_key)
+	end
+
 	if self.state == 3 and self:areAllKeysAtDestination() then
 		self:shuffleKeys()
 	elseif self.state == 10 and Input.down("confirm") and self:areAllKeysAtDestination() then
@@ -152,11 +235,19 @@ function LIMBO:update()
 	end
 end
 
+function LIMBO:hasFailed()
+	return self.success == false
+end
+
+function LIMBO:hasSucceeded()
+	return self.success == true
+end
+
 function LIMBO:draw()
 	for i,data in ipairs(self.keys_data) do
 		local x, y = unpack(data.pos)
 		love.graphics.setColor(ColorUtils.mergeColor(COLORS.white, data.color, data.color_alpha))
-		Draw.draw(self.keys_tex, x, y)
+		Draw.draw(self.use_wrong and self.keys_wrong_tex or self.keys_tex, x, y)
 	end
 
 	if DEBUG_RENDER then
