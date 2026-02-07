@@ -45,8 +45,17 @@ function LIMBO:init()
 	-- 2: wait to shuffle
 	-- 3: LIMBO
 	-- 4: wait for player's choice
-	-- 10: debug. Press CONFIRM to shuffle
+	-- 5: Choice made, slowing down souls
+	-- 6: Fade out all souls but the selected one
+	-- 7: Wait
+	-- 8: Show if it's correct or not
+	-- 9: Wait
+	-- 10: Set the success variable
+	-- -1: Debug
 	self.state = 0
+
+	self.debug_last_shuffle = ""
+	self.debug_selected_shuffle = 1
 end
 
 function LIMBO:randomizeColors()
@@ -92,7 +101,7 @@ local function createMatrix(tbl, w)
 	return m
 end
 
-function LIMBO:shuffleKeys()
+function LIMBO:shuffleKeys(force_shuffle)
 	local all_pos = {}
 	for i,data in ipairs(self.keys_data) do
 		table.insert(all_pos, data.pos)
@@ -100,15 +109,20 @@ function LIMBO:shuffleKeys()
 
 	local matrix = createMatrix(all_pos, 2)
 
-	local shuffle_mode = love.math.random(1,4)
+	local shuffle_mode = force_shuffle or love.math.random(1,4)
 
 	if shuffle_mode == 1 then
+		self.debug_last_shuffle = "flip"
 		matrix = TableUtils.flip(matrix)
 	elseif shuffle_mode == 2 then
-		matrix = TableUtils.rotate(matrix, Utils.random()<0.5)
+		local ccw = Utils.random()<0.5
+		self.debug_last_shuffle = "rotate ccw:"..tostring(ccw)
+		matrix = TableUtils.rotate(matrix, ccw)
 	elseif shuffle_mode == 3 then
+		self.debug_last_shuffle = "shuffle"
 		matrix = TableUtils.shuffle(matrix)
 	elseif shuffle_mode == 4 then
+		self.debug_last_shuffle = "reverse"
 		matrix = TableUtils.reverse(matrix)
 	end
 
@@ -215,6 +229,7 @@ function LIMBO:update()
 			self.state = self.state + 1
 		end
 	elseif self.state == 8 then
+		self.music:stop()
 		if self.selected_key == self.correct_key then
 			Assets.playSound("won")
 			self.timer = 40
@@ -231,8 +246,14 @@ function LIMBO:update()
 
 	if self.state == 3 and self:areAllKeysAtDestination() then
 		self:shuffleKeys()
-	elseif self.state == 10 and Input.down("confirm") and self:areAllKeysAtDestination() then
-		self:shuffleKeys()
+	elseif self.state == -1 and self:areAllKeysAtDestination() then
+		if Input.pressed("confirm") then
+			self:shuffleKeys(Input.shift() and self.debug_selected_shuffle or nil)
+		elseif Input.pressed("left") then
+			self.debug_selected_shuffle = MathUtils.clamp(self.debug_selected_shuffle-1, 1, 4)
+		elseif Input.pressed("right") then
+			self.debug_selected_shuffle = MathUtils.clamp(self.debug_selected_shuffle+1, 1, 4)
+		end
 	end
 end
 
@@ -257,6 +278,13 @@ function LIMBO:draw()
 		Draw.printShadow("Matrix:", 5, 10)
 		self:drawDebugMatrix(10, 50, "pos")
 		self:drawDebugMatrix(10, 50+36+40*4, "destination")
+	end
+
+	if self.state == -1 then
+		love.graphics.setFont(Assets.getFont("main_mono"))
+		Draw.setColor(COLORS.white)
+		Draw.printShadow("Last shuffle: "..self.debug_last_shuffle, 5, 10)
+		Draw.printShadow("Selected shuffle: "..self.debug_selected_shuffle, 5, 50)
 	end
 
 	super.draw(self)
