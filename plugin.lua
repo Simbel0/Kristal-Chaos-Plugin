@@ -191,8 +191,8 @@ function Plugin:unload()
     self:emptyRegistry()
 
     FRAMERATE = self.FRAMERATE or Kristal.Config["fps"]
-    SCREEN_WIDTH = 640
-    SCREEN_HEIGHT = 480
+    package.loaded["src.engine.vars"] = nil
+    require("src.engine.vars")
 
     self.print("Unloaded!")
 end
