@@ -147,6 +147,16 @@ function Plugin:init()
         end
     end)
 
+    -- "bad argument #1 to 'draw' (Drawable expected, got nil)" is a pretty common error with the plugin
+    -- So we're just not calling the original function is the first argument is nil now
+    HookSystem.hook(Draw, "draw", function(orig, ...)
+        if select(1, ...) == nil then
+            Chaos.print("Draw.draw expected a valid Drawable but received nil! Because it's a common effect of the plugin, the crash was discarded.")
+        else
+            return orig(...)
+        end
+    end)
+
     --- @class TableUtils
     --- Returns a list of every key in a table.
     ---
