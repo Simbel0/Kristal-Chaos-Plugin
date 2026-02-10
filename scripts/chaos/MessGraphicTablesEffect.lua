@@ -18,7 +18,7 @@ function MessGraphicTablesEffect:onEffectStart(in_battle)
 	end
 
 	for i,obj in ipairs(objects) do
-		obj:setGraphics(graphics[i])
+		obj:setGraphics(graphics[i] or {})
 	end
 end
 
