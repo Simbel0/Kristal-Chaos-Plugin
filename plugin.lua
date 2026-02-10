@@ -172,6 +172,18 @@ function Plugin:init()
         return result
     end)
 
+
+    -- "src/utils/stringutils.lua:149: attempt to index local 'value' (a nil value)" is also a common error and it seems to be because
+    -- the frame number doesn't match the new frames when some effects mess with actors or frames
+    -- So the solution is that if the frame doesn't exist anymore, we force it back to the first one and hope for the best
+    HookSystem.hook(Sprite, "updateTexture", function(orig, self)
+        if self.frames and not self.frames[self.frame] then
+            self:setProgress(0)
+            return
+        end
+        orig(self)
+    end)
+
     for path, name, effect in Registry.iterScripts("chaos", true) do
         if effect == nil then
             local _, path_end = path:find("chaos/")

@@ -1,6 +1,9 @@
 local ReloadMapEffect, super = Class(ChaosEffect, "reloadMap_effect")
 
 function ReloadMapEffect:onEffectStart(in_battle)
+	if Game.world:hasCutscene() then
+		Game.lock_movement = false
+	end
 	Game.world:loadMap(Game.world.map.id)
 end
 

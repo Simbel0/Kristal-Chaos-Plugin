@@ -12,13 +12,13 @@ function MessPhysicTablesEffect:onEffectStart(in_battle)
 		table.insert(physics, obj.physics)
 	end
 
-	for i=1,love.math.random(5) do
+	for i=1,love.math.random(1, 5) do
 		objects = TableUtils.shuffle(objects)
 		physics = TableUtils.shuffle(physics)
 	end
 
 	for i,obj in ipairs(objects) do
-		obj:setPhysics(physics[i])
+		obj:setPhysics(physics[i] or {})
 	end
 end
 
