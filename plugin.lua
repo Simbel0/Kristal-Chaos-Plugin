@@ -203,6 +203,9 @@ function Plugin:init()
     end
 
     self.print(#self:getEffectIDs().." effects loaded!")
+    if #self:getEffectIDs() == 0 then
+        self:toggleChaos()
+    end
 end
 
 function Plugin:unload()
