@@ -36,6 +36,11 @@ function EventPlayerMoveEffect:onEffectStart(in_battle)
 end
 
 function EventPlayerMoveEffect:update()
+    if not self.event or (self.event and self.event:isRemoved()) then
+        self:stopEffect()
+        return
+    end
+    
 	local x, y = self.event:getPosition()
 
 	local player = Game.world.player
