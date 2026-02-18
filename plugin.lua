@@ -14,11 +14,9 @@ table.shuffle = function(tbl, amount)
             tbl[k] = table.remove(values, love.math.random(1, #values))
         end
     else
-        for _=1,(amount or 5) do
-            for i = #tbl, 2, -1 do
-                local j = math.random(i)
-                tbl[i], tbl[j] = tbl[j], tbl[i]
-            end
+        for i = #tbl, 2, -1 do
+            local j = love.math.random(i)
+            tbl[i], tbl[j] = tbl[j], tbl[i]
         end
     end
     return tbl
