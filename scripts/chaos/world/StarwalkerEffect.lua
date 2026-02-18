@@ -12,7 +12,7 @@ function StarwalkerEffect:onEffectStart(in_battle)
 end
 
 function StarwalkerEffect:canRunEffect()
-	return Game.world and Game.world.stage
+	return Game.world and Game.world.stage and Game.world.map
 end
 
 return StarwalkerEffect
