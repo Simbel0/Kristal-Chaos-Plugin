@@ -113,6 +113,8 @@ function Plugin:init()
     self.IS_LIBRARY = false
     self.PATH = "mods/chaos"
 
+    self.chaosMult = 10
+
     self.timer = Utils.random(60, 600)
 
     self.debugStopChaos = false
@@ -224,7 +226,7 @@ end
 
 function Plugin:postUpdate()
     if self.debugStopChaos then return end
-    self.timer = self.timer - DTMULT
+    self.timer = self.timer - self.chaosMult*DTMULT
 
     if self.timer <= 0 then
         self:sillyTime()
