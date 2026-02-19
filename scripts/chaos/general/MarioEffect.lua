@@ -15,6 +15,9 @@ function MarioEffect:onEffectStart(in_battle)
     for k,texture in pairs(Assets.data.frames) do
         Assets.data.frames[k] = {mario}
     end
+    for k,id in pairs(Assets.texture_ids) do
+        Assets.texture_ids[mario] = id
+    end
 end
 
 return MarioEffect

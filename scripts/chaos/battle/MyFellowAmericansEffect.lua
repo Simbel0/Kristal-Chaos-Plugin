@@ -2,7 +2,7 @@
 local MyFellowAmericansEffect, super = Class(ChaosEffect, "letmebeclear_effect")
 
 function MyFellowAmericansEffect:onEffectStart(in_battle)
-	local enemy = TableUtils.pick(Game.battle.enemies)
+	local enemy = TableUtils.pick(Game.battle:getActiveEnemies())
 	Assets.playSound("deathnoise", 1, 0.75)
     local alphafx = enemy:addFX(AlphaFX(1))
     Game.battle.timer:tween(1, alphafx, {alpha = 0}, nil, function()

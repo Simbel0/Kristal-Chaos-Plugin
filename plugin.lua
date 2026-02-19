@@ -87,6 +87,9 @@ function Plugin.Utils:getAllInstancesOfClass(class, objs, recur_objs)
 end
 
 function Plugin:registerAsset(id, asset, replace)
+    if asset == nil then
+        self.print("Provided asset for id "..id.." is nil!")
+    end
     if self.registry[id] and not replace then return end
     self.registry[id] = asset
 end
