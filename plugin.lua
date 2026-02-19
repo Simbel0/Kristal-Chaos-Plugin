@@ -110,6 +110,8 @@ end
 
 function Plugin:init()
     self.registry = {}
+    self.IS_LIBRARY = false
+    self.PATH = "mods/chaos"
 
     self.timer = Utils.random(60, 600)
 

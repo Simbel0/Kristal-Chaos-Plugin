@@ -3,7 +3,7 @@ local MarioEffect, super = Class(ChaosEffect, "mario_effect")
 function MarioEffect:init()
 	super.init(self)
 	if not Chaos:getAsset("mario") then
-		Chaos:registerAsset("mario", love.graphics.newImage("mods/chaos/assets/sprites/mario.png"))
+		Chaos:registerAsset("mario", love.graphics.newImage(Chaos.PATH.."/assets/sprites/mario.png"))
 	end
 end
 
