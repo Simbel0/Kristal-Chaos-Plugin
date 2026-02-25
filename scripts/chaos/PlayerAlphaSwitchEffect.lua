@@ -8,7 +8,9 @@ function PlayerAlphaSwitchEffect:onEffectStart(in_battle)
 			Game.battle.party[1].alpha = Game.battle.party[1].alpha == 1 and 0 or 1
 		end
 	end
-	Game.world.player.alpha = Game.world.player.alpha == 1 and 0 or 1
+	if Game.world.player then
+		Game.world.player.alpha = Game.world.player.alpha == 1 and 0 or 1
+	end
 end
 
 function PlayerAlphaSwitchEffect:canRunEffect()

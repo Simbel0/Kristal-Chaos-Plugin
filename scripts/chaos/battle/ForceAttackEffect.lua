@@ -8,6 +8,10 @@ function ForceAttackEffect:init()
 end
 
 function ForceAttackEffect:update()
+	if Game.battle == nil then
+		self:stopEffect()
+		return
+	end
 	if Game.battle:getState() == "ACTIONSELECT" then
 		self.turns = self.turns - 1
 		for i,battler in ipairs(Game.battle.party) do
