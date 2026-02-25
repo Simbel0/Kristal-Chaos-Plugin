@@ -116,7 +116,20 @@ function Plugin:init()
     self.IS_LIBRARY = false
     self.PATH = "mods/chaos"
 
-    self.chaosMult = 10
+    self.chaosMult = 1
+    local config = Kristal.Config["plugins/chaos"]
+    if config then
+        if config.mult then
+            self.chaosMult = config.mult
+        end
+        if config.jevil then
+            self:registerAsset("jevil_sounds", {})
+            for i,v in ipairs({"chaos", "ha0", "ha1", "laugh0", "laugh1", "neochaos"}) do
+                table.insert(self:getAsset("jevil_sounds"), love.audio.newSource("mods/chaos/assets/sounds/jevil/"..v..".wav", "static"))
+            end
+            self:registerAsset("jevil_byebye", love.audio.newSource("mods/chaos/assets/sounds/jevil/byebye.wav", "static"))
+        end
+    end
 
     self.timer = Utils.random(60, 600)
 
@@ -163,11 +176,11 @@ function Plugin:init()
     end)
 
     --- @class TableUtils
-    --- Returns a list of every key in a table.
+    --- Returns a list of every value in a table.
     ---
     ---@generic T
-    ---@param t table<T, any> # The table to get the keys from.
-    ---@return T[] result     # An array of each key in the table.
+    ---@param t table<T, any> # The table to get the values from.
+    ---@return T[] result     # An array of each value in the table.
     ---
     HookSystem.hook(TableUtils, "getValues", function(_, t)
         local result = {}
@@ -214,6 +227,10 @@ function Plugin:init()
 end
 
 function Plugin:unload()
+    if self:getAsset("jevil_byebye") then
+        self:getAsset("jevil_byebye"):play()
+    end
+
     for i,v in ipairs(self.active_chaos) do
         v:onEffectEnd(true)
     end
@@ -311,6 +328,10 @@ function Plugin:sillyTime(effect_id)
 
     table.insert(self.active_chaos, effect)
     effect:onEffectStart(Game.battle ~= nil)
+
+    if self:getAsset("jevil_sounds") and not effect.nojevil then
+        TableUtils.pick(self:getAsset("jevil_sounds")):play()
+    end
 end
 
 return Plugin

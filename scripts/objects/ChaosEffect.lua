@@ -2,6 +2,7 @@ local ChaosEffect, super = Class()
 
 function ChaosEffect:init()
 	self.duration = -1
+	self.nojevil = false
 end
 
 function ChaosEffect:onEffectStart(in_battle) end

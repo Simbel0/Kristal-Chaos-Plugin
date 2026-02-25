@@ -83,7 +83,7 @@ function ChaosOptionsState:init(menu)
     		config = "mult",
     		default = 1,
     		limits = {min=0.1,max=50},
-    		desc = "Decides how fast Chaos effects happens.\n1 is normal speed, 2 is double, etc.",
+    		desc = "Decides how fast Chaos effects happens.\n1x is normal speed, 2x is double, etc.",
     		value = function(v)
     			return v.."x"
     		end
@@ -107,12 +107,13 @@ function ChaosOptionsState:init(menu)
     		end
     	},
     	{
+    	--[[{
     		name = "Toggle Effects",
     		config = "off_effects",
     		default = {},
     		desc = "Toggle on or off the Chaos Effects.",
     		state = "CHAOSTOGGLE"
-    	}
+    	}]]
     }
 
     self.config = Kristal.Config["plugins/chaos"] or {}
@@ -122,7 +123,7 @@ function ChaosOptionsState:init(menu)
     	end
     end
 
-    self.chaos_effects = {}
+    --[[self.chaos_effects = {}
     local path
     for plugin in Kristal.PluginLoader:iterPlugins() do
     	if plugin.id == "chaos_plugin" then
@@ -135,12 +136,7 @@ function ChaosOptionsState:init(menu)
 		return
 	end
 
-	populateTableFileTree(self.chaos_effects, path.."/scripts/chaos")
-	CHAOSLIST = self.chaos_effects
-	--self.effects_category = TableUtils.filter(TableUtils.getKeys(self.chaos_effects), function(v) return type(v) == "string" end)
-	--table.sort(self.folders)
-	--self.current_category = self.effects_category[1]
-	--print(Utils.dump(self.effects_category))
+	populateTableFileTree(self.chaos_effects, path.."/scripts/chaos")]]
 end
 
 function ChaosOptionsState:registerEvents()
@@ -354,7 +350,7 @@ function ChaosOptionsState:draw()
 	        end
 	    end
 
-	    if self.selected_option > 0 and self.selected_option <= #options then
+	    if self.selected_option > 0 and self.selected_option <= #options and options[self.selected_option].desc then
 	    	Draw.setColor(0.5, 0.5, 0.5)
 	    	local text = options[self.selected_option].desc
 	    	Draw.printShadow(text, 10, SCREEN_HEIGHT-getWrappedHeight(menu_font, text, SCREEN_WIDTH-10), nil, "center", SCREEN_WIDTH-10)
