@@ -1,5 +1,64 @@
 local ChaosOptionsState, super = Class(StateClass)
 
+local function populateTableFileTree(filetree, path, notfirst)
+	for i,name in ipairs(love.filesystem.getDirectoryItems(path)) do
+		local item = love.filesystem.getInfo(path.."/"..name)
+		if item.type == "file" and StringUtils.endsWith(name, ".lua") then
+			table.insert(filetree, name)
+		elseif item.type == "directory" then
+			filetree[name] = {open=false}
+			populateTableFileTree(filetree[name], path.."/"..name)
+		end
+	end
+end
+
+local function flattenFileTree(filetree, final)
+	local t = final or {}
+	for k,v in pairs(filetree) do
+        if type(k) == "string" and type(v) ~= "boolean" then
+        	table.insert(t, {name=k,open=v.open})
+        	if v.open then
+        		flattenFileTree(v, t)
+        	end
+        end
+	end
+	for i,v in ipairs(filetree) do
+		table.insert(t, v)
+	end
+	return t
+end
+
+local function iterFileTree(filetree)
+	local files = flattenFileTree(filetree)
+
+	local index = 0
+	local max_index = #files
+
+	local offset = 0
+	return function()
+		index = index + 1
+		if index > max_index then
+			return
+		end
+
+		local file = files[index]
+		local is_folder = false
+		local is_opened = nil
+		if type(file) == "table" then
+			is_folder = true
+			is_opened = file.open
+			offset = offset + (file.open and 32 or -32)
+			file = file.name
+			if offset < 0 then offset = 0 end
+		end
+
+		-- index: duh
+		-- file: a file or a folder
+		-- offset: increases when we're going in a folder
+		return index, file, offset, is_folder, is_opened
+	end
+end
+
 function ChaosOptionsState:init(menu)
 	self.menu = menu
 	
@@ -76,71 +135,12 @@ function ChaosOptionsState:init(menu)
 		return
 	end
 
-	local function populateTableFileTree(filetree, path, notfirst)
-		for i,name in ipairs(love.filesystem.getDirectoryItems(path)) do
-			local item = love.filesystem.getInfo(path.."/"..name)
-			if item.type == "file" and StringUtils.endsWith(name, ".lua") then
-				table.insert(filetree, name)
-			elseif item.type == "directory" then
-				filetree[name] = {open=false}
-				populateTableFileTree(filetree[name], path.."/"..name)
-			end
-		end
-	end
-
 	populateTableFileTree(self.chaos_effects, path.."/scripts/chaos")
 	CHAOSLIST = self.chaos_effects
 	--self.effects_category = TableUtils.filter(TableUtils.getKeys(self.chaos_effects), function(v) return type(v) == "string" end)
 	--table.sort(self.folders)
 	--self.current_category = self.effects_category[1]
 	--print(Utils.dump(self.effects_category))
-end
-
-local function flattenFileTree(filetree, final)
-	local t = final or {}
-	for k,v in pairs(filetree) do
-        if type(k) == "string" and type(v) ~= "boolean" then
-        	table.insert(t, {name=k,open=v.open})
-        	if v.open then
-        		flattenFileTree(v, t)
-        	end
-        end
-	end
-	for i,v in ipairs(filetree) do
-		table.insert(t, v)
-	end
-	return t
-end
-
-local function iterFileTree(filetree)
-	local files = flattenFileTree(filetree)
-
-	local index = 0
-	local max_index = #files
-
-	local offset = 0
-	return function()
-		index = index + 1
-		if index > max_index then
-			return
-		end
-
-		local file = files[index]
-		local is_folder = false
-		local is_opened = nil
-		if type(file) == "table" then
-			is_folder = true
-			is_opened = file.open
-			offset = offset + (file.open and 32 or -32)
-			file = file.name
-			if offset < 0 then offset = 0 end
-		end
-
-		-- index: duh
-		-- file: a file or a folder
-		-- offset: increases when we're going in a folder
-		return index, file, offset, is_folder, is_opened
-	end
 end
 
 function ChaosOptionsState:registerEvents()
@@ -251,7 +251,17 @@ function ChaosOptionsState:onKeyPressed(key, is_repeat)
 	    		end
 	    	end
 	    elseif self.state == "CHAOSTOGGLE" then
-	    	--local file = flattenFileTree(self.chaos_effects)[self.selected_option]
+	    	local file = flattenFileTree(self.chaos_effects)[self.selected_option]
+
+	    	if type(file) == "table" then
+	    		self.chaos_effects[file.name].open = not self.chaos_effects[file.name].open
+	    	else
+	    		if not TableUtils.contains(self.config["off_effects"], file) then
+	    			table.insert(self.config["off_effects"], file)
+	    		else
+	    			TableUtils.removeValue(self.config["off_effects"], file)
+	    		end
+	    	end
 	    end
     end
 end
@@ -355,9 +365,25 @@ function ChaosOptionsState:draw()
 	elseif self.state == "CHAOSTOGGLE" then
 		local menu_x = 185 - 14
 	    local menu_y = 110
-	    local index = 0
 
+	    local width = 360
+    	local height = 32 * 10
+    	local total_height = 32 * #flattenFileTree(self.chaos_effects)
+
+	    Draw.pushScissor()
+    	Draw.scissor(menu_x, menu_y, width + 10, height + 10)
+
+    	menu_y = menu_y + self.scroll_y
+
+	    local old_offset = 0
 	    for i, file, offset, is_folder, is_opened in iterFileTree(self.chaos_effects) do
+	    	-- To prevent folders from being also moved to the right...
+	    	--local true_offset = offset
+	    	--if old_offset ~= offset then
+	    	--	true_offset = offset - 32
+	    	--	old_offset = offset
+	    	--end
+
 	    	local y = menu_y + 32 * (i - 1)
 	    	local suffix = ""
 	    	if is_folder then
@@ -366,10 +392,27 @@ function ChaosOptionsState:draw()
 
 	    	if is_opened then
 	    		Draw.setColor(COLORS.aqua)
+	    	elseif TableUtils.contains(self.config["off_effects"], file) then
+	    		Draw.setColor(COLORS.red)
 	    	else
 	    		Draw.setColor(COLORS.white)
 	    	end
 	    	Draw.printShadow(file..suffix, menu_x+offset, y)
+	    end
+
+	    -- Draw the scrollbar background if the menu scrolls
+	    if total_height > height then
+	        Draw.setColor({ 0, 0, 0, 0.5 })
+	        love.graphics.rectangle("fill", menu_x + width, 0, 4, menu_y + height - self.scroll_y)
+
+	        local scrollbar_height = (height / total_height) * height
+	        local scrollbar_y = (-self.scroll_y / (total_height - height)) * (height - scrollbar_height)
+
+	        Draw.popScissor()
+	        Draw.setColor(1, 1, 1, 1)
+	        love.graphics.rectangle("fill", menu_x + width, menu_y + scrollbar_y - self.scroll_y, 4, scrollbar_height)
+	    else
+	        Draw.popScissor()
 	    end
 
 		Draw.printShadow("Back", 0, 454 - 8, 2, "center", 640)
