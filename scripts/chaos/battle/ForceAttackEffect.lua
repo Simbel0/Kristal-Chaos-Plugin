@@ -5,7 +5,6 @@ function ForceAttackEffect:init()
 	self.duration = math.huge
 
 	self.turns = love.math.random(1, 5)
-	Chaos.print(self.turns)
 end
 
 function ForceAttackEffect:update()

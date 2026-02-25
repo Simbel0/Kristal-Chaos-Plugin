@@ -302,7 +302,7 @@ end
 
 function Plugin:toggleChaos()
     self.debugStopChaos = not self.debugStopChaos
-    self.print((self.debugStopChaos and "Stopped" or "Started").." the chaos!")
+    self.print((self.debugStopChaos and "Stopped" or "Started").." the chaos!", Chaos.CONSOLE_LEVEL.CRITICAL)
 end
 
 function Plugin:getChaosEffect(id)
