@@ -134,11 +134,11 @@ function ChaosOptionsState:init(menu)
     }
 
     self.config = Kristal.Config["plugins/chaos"] or {}
-    if #TableUtils.getKeys(self.config) == 0 then
-    	for i,v in ipairs(self.options) do
-    		self.config[v.config] = v.default
-    	end
-    end
+	for i,v in ipairs(self.options) do
+    	if self.config[v.config] == nil then
+			self.config[v.config] = v.default
+		end
+	end
 
     --[[self.chaos_effects = {}
     local path
