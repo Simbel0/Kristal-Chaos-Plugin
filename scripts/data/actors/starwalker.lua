@@ -1,4 +1,4 @@
-local actor, super = Class(Actor, "starwalker")
+local actor, super = Class(Actor, "chaos_starwalker")
 
 function actor:init()
     super.init(self)
@@ -20,7 +20,7 @@ function actor:init()
     self.flip = nil
 
     -- Path to this actor's sprites (defaults to "")
-    self.path = "npcs/starwalker"
+    self.path = "starwalker"
     -- This actor's default sprite or animation, relative to the path (defaults to "")
     self.default = ""
 
