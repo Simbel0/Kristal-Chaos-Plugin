@@ -123,6 +123,10 @@ function Plugin:init()
     self.registry = {}
     self.IS_LIBRARY = false
     self.PATH = "mods/chaos"
+    if Mod.info.libs["chaos_lib"] then
+        self.IS_LIBRARY = true
+        self.PATH = Mod.info.libs["chaos_lib"].path
+    end
     self.console_level = 2
 
     self.chaosMult = 1
