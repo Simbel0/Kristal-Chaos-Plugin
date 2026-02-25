@@ -134,9 +134,9 @@ function Plugin:init()
         if config.jevil then
             self:registerAsset("jevil_sounds", {})
             for i,v in ipairs({"chaos", "ha0", "ha1", "laugh0", "laugh1", "neochaos"}) do
-                table.insert(self:getAsset("jevil_sounds"), love.audio.newSource("mods/chaos/assets/sounds/jevil/"..v..".wav", "static"))
+                table.insert(self:getAsset("jevil_sounds"), love.audio.newSource(self.PATH.."/assets/sounds/jevil/"..v..".wav", "static"))
             end
-            self:registerAsset("jevil_byebye", love.audio.newSource("mods/chaos/assets/sounds/jevil/byebye.wav", "static"))
+            self:registerAsset("jevil_byebye", love.audio.newSource(self.PATH.."/assets/sounds/jevil/byebye.wav", "static"))
         end
         if config.console then
             self.console_level = config.console
