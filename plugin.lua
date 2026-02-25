@@ -125,7 +125,7 @@ function Plugin:init()
 
     self.registry = {}
     self.IS_LIBRARY = false
-    self.PATH = "mods/chaos"
+    self.PATH = Kristal.Mods.getMod("chaos_plugin").path
     if Mod.info.libs["chaos_lib"] then
         self.IS_LIBRARY = true
         self.PATH = Mod.info.libs["chaos_lib"].path
