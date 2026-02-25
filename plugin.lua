@@ -5,7 +5,7 @@ Plugin.Utils = {}
 
 ---@enum Plugin.CONSOLE_LEVEL
 Plugin.CONSOLE_LEVEL = {
-    CRITICAL = 0, -- Special case, Should always appear regardless of setting. I believe crashes are important enough for that
+    ALWAYS = 0,   -- Special case, always appear regardless of user setting
     NONE = 1,     -- No messages will appear
     LOAD = 2,     -- Only "Loaded!" and "Unloaded!" logs will appear
     ALL = 3       -- Print everything. Mostly adds the "Starting effect X" and "Removing effect X" logs
@@ -164,9 +164,9 @@ function Plugin:init()
     HookSystem.hook(Kristal, "errorHandler", function(orig, ...)
         local ok, err = pcall(self.unload, self)
         if ok then
-            self.print("A crash occurred!! Chaos Plugin was able to unload itself", self.CONSOLE_LEVEL.CRITICAL)
+            self.print("A crash occurred!! Chaos Plugin was able to unload itself", self.CONSOLE_LEVEL.ALWAYS)
         else
-            self.print("A crash occurred!! Chaos Plugin met an error trying to unload itself: "..err, self.CONSOLE_LEVEL.CRITICAL)
+            self.print("A crash occurred!! Chaos Plugin met an error trying to unload itself: "..err, self.CONSOLE_LEVEL.ALWAYS)
         end
         return orig(...)
     end)
@@ -302,7 +302,7 @@ end
 
 function Plugin:toggleChaos()
     self.debugStopChaos = not self.debugStopChaos
-    self.print((self.debugStopChaos and "Stopped" or "Started").." the chaos!", Chaos.CONSOLE_LEVEL.CRITICAL)
+    self.print((self.debugStopChaos and "Stopped" or "Started").." the chaos!", Chaos.CONSOLE_LEVEL.ALWAYS)
 end
 
 function Plugin:getChaosEffect(id)
