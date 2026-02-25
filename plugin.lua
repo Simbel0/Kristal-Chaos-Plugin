@@ -10,6 +10,7 @@ Plugin.CONSOLE_LEVEL = {
     LOAD = 2,     -- Only "Loaded!" and "Unloaded!" logs will appear
     ALL = 3       -- Print everything. Mostly adds the "Starting effect X" and "Removing effect X" logs
 }
+Plugin.CURRENT_CONSOLE_LEVEL = 2
 
 table.shuffle = function(tbl, amount)
     if not Utils.isArray(tbl) then
@@ -127,7 +128,6 @@ function Plugin:init()
         self.IS_LIBRARY = true
         self.PATH = Mod.info.libs["chaos_lib"].path
     end
-    self.console_level = 2
 
     self.chaosMult = 1
     local config = Kristal.Config["plugins/chaos"]
@@ -143,7 +143,7 @@ function Plugin:init()
             self:registerAsset("jevil_byebye", love.audio.newSource(self.PATH.."/assets/sounds/jevil/byebye.wav", "static"))
         end
         if config.console then
-            self.console_level = config.console
+            self.CURRENT_CONSOLE_LEVEL = config.console
         end
     end
 
@@ -283,7 +283,7 @@ function Plugin:postUpdate()
 end
 
 function Plugin.print(msg, lvl)
-    if (lvl or Chaos.CONSOLE_LEVEL.ALL) > Chaos.console_level then
+    if (lvl or Chaos.CONSOLE_LEVEL.ALL) > Chaos.CURRENT_CONSOLE_LEVEL then
         return
     end
 
