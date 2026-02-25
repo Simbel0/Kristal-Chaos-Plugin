@@ -253,6 +253,9 @@ function ChaosOptionsState:onKeyPressed(key, is_repeat)
     	Assets.stopAndPlaySound("ui_select")
 
     	if self.state == "MAIN" then
+    		local options = self.options
+	    	local max_option = #options + 1
+
 	    	if self.selected_option == max_option then
 	    		Assets.stopAndPlaySound("ui_move")
 	    		self.menu:setState("plugins")
