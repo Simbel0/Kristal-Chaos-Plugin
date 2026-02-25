@@ -163,6 +163,18 @@ function Plugin:init()
         if config.console then
             self.CURRENT_CONSOLE_LEVEL = config.console
         end
+        if config.autosave then
+            self:registerAsset("savepoint", love.audio.newSource("assets/sounds/save.wav", "static"))
+            HookSystem.hook(World, "loadMap", function(orig, self, ...)
+                local old_map = Game.world.map.id
+                orig(self, ...)
+                if old_map ~= Game.world.map.id and Game.started then
+                    Kristal.saveGame()
+                    Chaos:getAsset("savepoint"):stop()
+                    Chaos:getAsset("savepoint"):play()
+                end
+            end)
+        end
     end
 
     self.timer = Utils.random(60, 600)
