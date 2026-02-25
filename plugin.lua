@@ -121,16 +121,34 @@ function Plugin:emptyRegistry()
 end
 
 function Plugin:init()
+    local config = Kristal.Config["plugins/chaos"]
+
     self.registry = {}
     self.IS_LIBRARY = false
     self.PATH = "mods/chaos"
     if Mod.info.libs["chaos_lib"] then
         self.IS_LIBRARY = true
         self.PATH = Mod.info.libs["chaos_lib"].path
+
+        for option,option_type in pairs({jevil="boolean", console="boolean", mult="number", autosave="boolean"}) do
+            local plugin_config = config and config[option]
+            local lib_config = Kristal.getLibConfig("chaos_lib", option, true)
+
+            if lib_config ~= nil then
+                assert(type(lib_config)==option_type, "Library config is incorrect. Expected a "..option_type..", got "..type(lib_config).." for option \""..option.."\"")
+            end
+
+            if plugin_config ~= nil and lib_config ~= nil and type(plugin_config) == "table" then
+                config[option] = TableUtils.merge(plugin_config, lib_config, true)
+            elseif lib_config ~= nil then
+                config[option] = lib_config
+            elseif plugin_config ~= nil then
+                config[option] = plugin_config
+            end
+        end
     end
 
     self.chaosMult = 1
-    local config = Kristal.Config["plugins/chaos"]
     if config then
         if config.mult then
             self.chaosMult = config.mult
