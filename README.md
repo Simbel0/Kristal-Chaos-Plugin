@@ -1,5 +1,5 @@
 # Chaos Plugin for Kristal
-A plugin for Deltarune fangames made on the Kristal engine that produces random effects at random intervals while playing, making everything chaotic. Based on [Super Mario 64 Chaos Edition](https://romhacking.com/hack/super-mario-64---chaos-edition).
+A plugin for Deltarune fangames made on the Kristal engine that produces random effects at random intervals while playing, making everything chaotic. Inspired by [Super Mario 64 Chaos Edition](https://romhacking.com/hack/super-mario-64---chaos-edition).
 
 # How to install
 > [!CAUTION]
