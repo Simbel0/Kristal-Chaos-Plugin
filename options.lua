@@ -86,7 +86,24 @@ function ChaosOptionsState:init(menu)
     		desc = "Decides how fast Chaos effects happens.\n1x is normal speed, 2x is double, etc.",
     		value = function(v)
     			return v.."x"
-    		end
+    		end,
+    		new_value = function(v, key)
+    			local mult = 1
+				if v < 1 or (v == 1 and Input.is("left", key)) then
+					mult = 0.1
+				elseif v > 10 or (v == 10 and Input.is("right", key)) then
+					mult = 5
+				end
+
+				if Input.is("left", key) then
+					v = v - mult
+				end
+				if Input.is("right", key) then
+					v = v + mult
+				end
+
+				return v
+			end
     	},
     	{
     		name = "Auto-Save",
@@ -192,23 +209,19 @@ function ChaosOptionsState:onKeyPressed(key, is_repeat)
 		local option = self.options[self.selected_option]
 		local config = self.config[option.config]
 		local old_config = config
-		
-		local mult = 1
-		if config < 1 or (config == 1 and Input.is("left", key)) then
-			mult = 0.1
-		elseif config > 10 or (config == 10 and Input.is("right", key)) then
-			mult = 5
-		end
 
-		if Input.is("left", key) then
-			config = config - mult
-		end
-		if Input.is("right", key) then
-			config = config + mult
+		if option.new_value then
+			config = option.new_value(config, key)
+		else
+			if Input.is("left", key) then
+				config = config - 1
+			end
+			if Input.is("right", key) then
+				config = config + 1
+			end
 		end
 
 		self.config[option.config] = MathUtils.clamp(config, option.limits.min, option.limits.max)
-		print("B", config)
 
 		if old_config ~= self.config[option.config] then
 	    	Assets.stopAndPlaySound("ui_move")
