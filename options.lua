@@ -124,6 +124,16 @@ function ChaosOptionsState:init(menu)
     		end
     	},
     	{
+    		name = "Console Logs",
+    		config = "console",
+    		default = 2,
+    		limits = {min=1,max=3},
+    		desc = "What can Chaos Plugin prints to the LÖVE2D and Kristal console.",
+    		value = function(v)
+    			local values = {"NONE", "LOAD", "ALL"}
+    			return values[v]
+    		end
+    	}
     	--[[{
     		name = "Toggle Effects",
     		config = "off_effects",

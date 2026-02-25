@@ -3,6 +3,14 @@ Registry.registerGlobal("Chaos", Plugin)
 
 Plugin.Utils = {}
 
+---@enum Plugin.CONSOLE_LEVEL
+Plugin.CONSOLE_LEVEL = {
+    CRITICAL = 0, -- Special case, Should always appear regardless of setting. I believe crashes are important enough for that
+    NONE = 1,     -- No messages will appear
+    LOAD = 2,     -- Only "Loaded!" and "Unloaded!" logs will appear
+    ALL = 3       -- Print everything. Mostly adds the "Starting effect X" and "Removing effect X" logs
+}
+
 table.shuffle = function(tbl, amount)
     if not Utils.isArray(tbl) then
         local values = {}
@@ -115,6 +123,7 @@ function Plugin:init()
     self.registry = {}
     self.IS_LIBRARY = false
     self.PATH = "mods/chaos"
+    self.console_level = 2
 
     self.chaosMult = 1
     local config = Kristal.Config["plugins/chaos"]
@@ -128,6 +137,9 @@ function Plugin:init()
                 table.insert(self:getAsset("jevil_sounds"), love.audio.newSource("mods/chaos/assets/sounds/jevil/"..v..".wav", "static"))
             end
             self:registerAsset("jevil_byebye", love.audio.newSource("mods/chaos/assets/sounds/jevil/byebye.wav", "static"))
+        end
+        if config.console then
+            self.console_level = config.console
         end
     end
 
@@ -148,9 +160,9 @@ function Plugin:init()
     HookSystem.hook(Kristal, "errorHandler", function(orig, ...)
         local ok, err = pcall(self.unload, self)
         if ok then
-            self.print("A crash occurred!! Chaos Plugin was able to unload itself")
+            self.print("A crash occurred!! Chaos Plugin was able to unload itself", self.CONSOLE_LEVEL.CRITICAL)
         else
-            self.print("A crash occurred!! Chaos Plugin met an error trying to unload itself: "..err)
+            self.print("A crash occurred!! Chaos Plugin met an error trying to unload itself: "..err, self.CONSOLE_LEVEL.CRITICAL)
         end
         return orig(...)
     end)
@@ -220,7 +232,7 @@ function Plugin:init()
         ::continue::
     end
 
-    self.print(#self:getEffectIDs().." effects loaded!")
+    self.print(#self:getEffectIDs().." effects loaded!", self.CONSOLE_LEVEL.LOAD)
     if #self:getEffectIDs() == 0 then
         self:toggleChaos()
     end
@@ -241,7 +253,7 @@ function Plugin:unload()
     package.loaded["src.engine.vars"] = nil
     require("src.engine.vars")
 
-    self.print("Unloaded!")
+    self.print("Unloaded!", self.CONSOLE_LEVEL.LOAD)
 end
 
 function Plugin:postUpdate()
@@ -266,7 +278,11 @@ function Plugin:postUpdate()
     end
 end
 
-function Plugin.print(msg)
+function Plugin.print(msg, lvl)
+    if (lvl or Chaos.CONSOLE_LEVEL.ALL) > Chaos.console_level then
+        return
+    end
+
     msg = "[Chaos Plugin] "..msg
     Kristal.Console:push("[color:#00ff00]"..msg)
     print(msg)
